@@ -93,7 +93,7 @@ export function Dropzone({ onFileSelected, isUploading = false }: DropzoneProps)
           <span>•</span>
           <span>🔒 Non-root sandbox isolation</span>
           <span>•</span>
-          <span>🛡️ 1-Hour ephemeral auto-deletion</span>
+          <span>🛡️ Zero data retention</span>
         </div>
       </div>
 
