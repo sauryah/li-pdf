@@ -9,12 +9,9 @@ export function Navbar() {
           <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
             <FileText className="w-5 h-5" />
           </div>
-          <div>
+          <div className="flex items-center">
             <span className="font-bold text-xl tracking-tight text-slate-900">
               li<span className="text-blue-600">.pdf</span>
-            </span>
-            <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              v2.1 Core
             </span>
           </div>
         </div>
