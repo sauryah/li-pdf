@@ -66,7 +66,7 @@ export function Dropzone({ onFileSelected, isUploading = false }: DropzoneProps)
           className="hidden"
           onChange={handleChange}
           disabled={isUploading}
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.rtf,.txt,.html"
         />
 
         <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-4 shadow-sm">
@@ -74,10 +74,10 @@ export function Dropzone({ onFileSelected, isUploading = false }: DropzoneProps)
         </div>
 
         <h3 className="text-xl font-semibold text-slate-900 mb-2">
-          Drop your PDF or Image here
+          Drop your Document, PDF, or Image here
         </h3>
         <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
-          Supports <span className="font-medium text-slate-700">PDF, JPG, PNG, WebP</span> up to 500MB. Direct-to-storage streaming with zero server payload buffering.
+          Supports <span className="font-medium text-slate-700">PDF, DOCX, XLSX, PPTX, RTF, TXT, HTML, JPG, PNG, WebP</span> up to 500MB. Direct-to-storage streaming with zero server payload buffering.
         </p>
 
         <div className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-colors">
