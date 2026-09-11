@@ -7,6 +7,7 @@ import { Settings2, ArrowRight, Layers, FileCheck2, Cpu, Lock, Unlock, RotateCw,
 interface CapabilitiesSelectorProps {
   file: File;
   capabilities: Capability[];
+  initialOperation?: string;
   onStartJob: (operation: string, parameters: Record<string, any>) => void;
   onReset: () => void;
 }
@@ -14,6 +15,7 @@ interface CapabilitiesSelectorProps {
 export function CapabilitiesSelector({
   file,
   capabilities,
+  initialOperation,
   onStartJob,
   onReset,
 }: CapabilitiesSelectorProps) {
@@ -26,7 +28,13 @@ export function CapabilitiesSelector({
   });
 
   const [selectedOp, setSelectedOp] = useState<string>(
-    relevantCaps.length > 0 ? relevantCaps[0].operation : isPDF ? 'pdf_compress' : 'png_to_webp'
+    initialOperation && relevantCaps.some(c => c.operation === initialOperation)
+      ? initialOperation
+      : relevantCaps.length > 0
+      ? relevantCaps[0].operation
+      : isPDF
+      ? 'pdf_compress'
+      : 'png_to_webp'
   );
   const [qualityPreset, setQualityPreset] = useState<string>('balanced');
   const [jpegQuality, setJpegQuality] = useState<number>(80);
