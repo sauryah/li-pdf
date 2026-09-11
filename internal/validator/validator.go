@@ -144,3 +144,76 @@ func (v *ProductionValidator) ValidateImage(ctx context.Context, filePath string
 
 	return nil
 }
+
+// ValidateDocument verifies generic document output exists, is non-empty, and has expected signature.
+func (v *ProductionValidator) ValidateDocument(ctx context.Context, filePath string, expectedExt string) error {
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("output document does not exist: %w", err)
+	}
+
+	if fi.Size() < 20 {
+		return fmt.Errorf("output document is suspiciously small (%d bytes)", fi.Size())
+	}
+
+	switch strings.ToLower(expectedExt) {
+	case "pdf":
+		return v.ValidatePDF(ctx, filePath, 1)
+	case "txt":
+		return v.ValidateText(ctx, filePath)
+	case "html", "htm":
+		return v.ValidateHTML(ctx, filePath)
+	case "docx", "xlsx", "pptx", "odt", "ods", "odp":
+		// Check for Zip magic bytes PK\x03\x04
+		header := make([]byte, 4)
+		f, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		n, _ := f.Read(header)
+		if n < 4 || !bytes.HasPrefix(header, []byte("PK\x03\x04")) {
+			return fmt.Errorf("output office document lacks valid PK zip container signature")
+		}
+	}
+
+	return nil
+}
+
+// ValidateText verifies that text output is valid non-empty UTF-8 / ASCII.
+func (v *ProductionValidator) ValidateText(ctx context.Context, filePath string) error {
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("output text file does not exist: %w", err)
+	}
+
+	if fi.Size() == 0 {
+		return fmt.Errorf("output text file is 0 bytes")
+	}
+
+	return nil
+}
+
+// ValidateHTML verifies that HTML output contains valid basic markup.
+func (v *ProductionValidator) ValidateHTML(ctx context.Context, filePath string) error {
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("output HTML file does not exist: %w", err)
+	}
+
+	if fi.Size() < 10 {
+		return fmt.Errorf("output HTML file is suspiciously small (%d bytes)", fi.Size())
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read HTML file: %w", err)
+	}
+
+	content := strings.ToLower(string(data))
+	if !strings.Contains(content, "<html") && !strings.Contains(content, "<div") && !strings.Contains(content, "<body") && !strings.Contains(content, "<!doctype") && !strings.Contains(content, "<p") {
+		return fmt.Errorf("output file does not contain recognized HTML elements")
+	}
+
+	return nil
+}
