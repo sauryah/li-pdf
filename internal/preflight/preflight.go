@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -89,12 +90,40 @@ func (a *Analyzer) Analyze(ctx context.Context, filePath string, operation strin
 		} else {
 			analysis.ResourceProfile = models.ProfileImageSmall
 		}
+	} else if strings.Contains(mimeType, "officedocument") || strings.Contains(mimeType, "opendocument") || strings.Contains(mimeType, "msword") || strings.Contains(mimeType, "rtf") || strings.Contains(mimeType, "text/") {
+		analysis.ResourceProfile = models.ProfileOffice
+		analysis.AssignedQueue = "queue_office"
 	}
 
 	return analysis, nil
 }
 
 func detectMIME(filePath string) (string, error) {
+	// First check extension for deterministic types
+	ext := strings.ToLower(filepath.Ext(filePath))
+	switch ext {
+	case ".docx":
+		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document", nil
+	case ".xlsx":
+		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nil
+	case ".pptx":
+		return "application/vnd.openxmlformats-officedocument.presentationml.presentation", nil
+	case ".doc":
+		return "application/msword", nil
+	case ".xls":
+		return "application/vnd.ms-excel", nil
+	case ".ppt":
+		return "application/vnd.ms-powerpoint", nil
+	case ".odt":
+		return "application/vnd.oasis.opendocument.text", nil
+	case ".rtf":
+		return "application/rtf", nil
+	case ".txt":
+		return "text/plain", nil
+	case ".html", ".htm":
+		return "text/html", nil
+	}
+
 	f, err := os.Open(filePath)
 	if err != nil {
 		return "", err
@@ -120,6 +149,12 @@ func detectMIME(filePath string) (string, error) {
 	}
 	if len(header) >= 12 && string(header[0:4]) == "RIFF" && string(header[8:12]) == "WEBP" {
 		return "image/webp", nil
+	}
+	if bytes.HasPrefix(header, []byte("{\\rtf1")) {
+		return "application/rtf", nil
+	}
+	if bytes.HasPrefix(header, []byte("<!DOCTYPE html")) || bytes.HasPrefix(header, []byte("<html")) {
+		return "text/html", nil
 	}
 
 	return "application/octet-stream", nil
