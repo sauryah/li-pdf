@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/li-pdf/li-pdf/internal/metrics"
 )
 
 type StoragePurger struct {
@@ -78,6 +80,7 @@ func (p *StoragePurger) Start(ctx context.Context, interval time.Duration, ttl t
 			if err != nil {
 				log.Printf("[Storage Purger] Error purging expired files: %v", err)
 			} else if count > 0 {
+				metrics.DefaultMetrics.RecordPurgedFiles(int64(count))
 				log.Printf("[Storage Purger] Successfully purged %d expired ephemeral file(s)", count)
 			}
 		}
