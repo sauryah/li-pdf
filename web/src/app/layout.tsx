@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer';
 
 export const metadata: Metadata = {
   title: 'li.pdf — Universal Document & Image Converter, Compressor',
-  description: 'Fast, privacy-first universal file utility. Compress, convert, split, and merge PDFs and images with verified ephemeral auto-deletion.',
+  description: 'Fast, privacy-first universal file utility. Compress, convert, split, and merge PDFs and images with zero data retention.',
 };
 
 export default function RootLayout({
