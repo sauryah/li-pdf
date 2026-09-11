@@ -624,76 +624,76 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Work Your Way: Multi-Platform Ecosystem Cards */}
-      <div id="solutions" className="mt-20 pt-16 border-t border-slate-200">
+      {/* Core Platform Architecture Pillars */}
+      <div id="architecture-pillars" className="mt-20 pt-16 border-t border-slate-200">
         <div className="text-center max-w-3xl mx-auto mb-14">
           <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Work your way — on any device, anywhere
+            Built for High-Throughput Document Processing
           </h2>
           <p className="mt-3 text-base text-slate-600">
-            Whether on your workstation, smartphone, or integrating automated cloud APIs, enjoy frictionless performance.
+            Engineered with isolated worker queues, direct storage streaming, and strict automated output validation.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Card 1: Desktop */}
-          <div id="desktop-app" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+          {/* Card 1: Multi-Queue Batching */}
+          <div id="batch-processing" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
             <div>
               <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#E5322D] flex items-center justify-center mb-6">
-                <FileText className="w-7 h-7" />
+                <Layers className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-extrabold text-slate-900 mb-2">
-                Work offline with Desktop
+                Multi-Queue Atomic Batching
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Batch edit, compress, and convert sensitive documents locally with zero internet dependency and hardware acceleration.
+                Submit multi-file heterogeneous conversion batches across independent worker queues (PDF, Office, OCR, Image) with non-blocking async execution.
               </p>
             </div>
             <div className="mt-8 pt-4 border-t border-slate-100">
               <span className="text-xs font-bold text-[#E5322D] inline-flex items-center space-x-1">
-                <span>Available for Windows & macOS</span>
+                <span>Parallel Multi-Worker Dispatch</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </span>
             </div>
           </div>
 
-          {/* Card 2: Mobile */}
-          <div id="mobile-web" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+          {/* Card 2: Developer REST API */}
+          <div id="api-endpoints" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
             <div>
               <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
-                <Layers className="w-7 h-7" />
+                <Zap className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-extrabold text-slate-900 mb-2">
-                On-the-go with Mobile Web
+                Developer REST API
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Your favorite PDF and image tools right in your pocket. Snap photos of documents and convert to searchable PDFs on the fly.
+                Direct-to-storage stream uploads via presigned URLs, sub-second dispatch, idempotency key replay safety, and Prometheus metrics.
               </p>
             </div>
             <div className="mt-8 pt-4 border-t border-slate-100">
               <span className="text-xs font-bold text-blue-600 inline-flex items-center space-x-1">
-                <span>iOS Safari & Android Chrome</span>
+                <span>Zero Server Buffering</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </span>
             </div>
           </div>
 
-          {/* Card 3: Business */}
-          <div id="business" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+          {/* Card 3: Sandbox Isolation */}
+          <div id="sandbox-isolation" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
             <div>
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6">
                 <ShieldCheck className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-extrabold text-slate-900 mb-2">
-                Built for Enterprise & Teams
+                Hostile Sandbox Isolation
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Automated document workflows, strict zero-retention security guarantees, high-volume batch APIs, and Prometheus metrics.
+                All binary transformations run in unprivileged sandboxes with memory limits, verified by automated output validation gates.
               </p>
             </div>
             <div className="mt-8 pt-4 border-t border-slate-100">
               <span className="text-xs font-bold text-emerald-600 inline-flex items-center space-x-1">
-                <span>ISO 27001 Compliant Architecture</span>
+                <span>1-Hour Ephemeral Purger Active</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </span>
             </div>
