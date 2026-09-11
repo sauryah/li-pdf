@@ -35,6 +35,7 @@ export function CapabilitiesSelector({
   const [password, setPassword] = useState<string>('');
   const [resizeW, setResizeW] = useState<number>(1200);
   const [resizeH, setResizeH] = useState<number>(800);
+  const [ocrLang, setOcrLang] = useState<string>('eng');
 
   const currentCap = capabilities.find((c) => c.operation === selectedOp);
 
@@ -55,6 +56,8 @@ export function CapabilitiesSelector({
       params.height = resizeH;
     } else if (selectedOp.includes('jpg') || selectedOp.includes('compress')) {
       params.quality = jpegQuality;
+    } else if (selectedOp === 'pdf_ocr' || selectedOp === 'image_to_txt' || selectedOp === 'image_to_searchable_pdf') {
+      params.language = ocrLang;
     }
     if (selectedOp.startsWith('pdf_to_')) {
       params.dpi = dpi;
@@ -245,6 +248,35 @@ export function CapabilitiesSelector({
             <span>72 DPI (Web Screen)</span>
             <span>150 DPI (Balanced E-Book)</span>
             <span>300 DPI (High-Res Print)</span>
+          </div>
+        </div>
+      )}
+
+      {(selectedOp === 'pdf_ocr' || selectedOp === 'image_to_txt' || selectedOp === 'image_to_searchable_pdf') && (
+        <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div className="flex items-center space-x-2 mb-3">
+            <FileCheck2 className="w-4 h-4 text-slate-700" />
+            <span className="text-sm font-semibold text-slate-900">OCR Recognition Language</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { code: 'eng', name: 'English' },
+              { code: 'spa', name: 'Spanish' },
+              { code: 'fra', name: 'French' },
+              { code: 'deu', name: 'German' },
+            ].map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => setOcrLang(lang.code)}
+                className={`p-3 rounded-xl border text-xs font-medium text-center transition-all ${
+                  ocrLang === lang.code
+                    ? 'border-blue-600 bg-white shadow-sm font-semibold text-blue-900'
+                    : 'border-slate-200 bg-white/50 text-slate-600 hover:bg-white'
+                }`}
+              >
+                {lang.name}
+              </button>
+            ))}
           </div>
         </div>
       )}
