@@ -26,6 +26,7 @@ type WorkerSupervisor struct {
 	pdfRenderer engine.PDFRenderer
 	imgEngine   engine.ImageProcessor
 	docEngine   engine.DocumentConverter
+	ocrEngine   engine.OCREngine
 	apiH        *api.APIHandler
 	workDir     string
 }
@@ -39,6 +40,7 @@ func NewWorkerSupervisor(
 	pdfRen engine.PDFRenderer,
 	img engine.ImageProcessor,
 	doc engine.DocumentConverter,
+	ocr engine.OCREngine,
 	apiH *api.APIHandler,
 ) *WorkerSupervisor {
 	wDir := filepath.Join(os.TempDir(), "lipdf_worker_scratch")
@@ -53,6 +55,7 @@ func NewWorkerSupervisor(
 		pdfRenderer: pdfRen,
 		imgEngine:   img,
 		docEngine:   doc,
+		ocrEngine:   ocr,
 		apiH:        apiH,
 		workDir:     wDir,
 	}
@@ -328,6 +331,49 @@ func (w *WorkerSupervisor) processTask(ctx context.Context, task *queue.TaskPayl
 		outputLocalPath = filepath.Join(jobScratch, "converted.docx")
 		if err := w.docEngine.ConvertDocument(ctx, localInput, "docx", outputLocalPath); err != nil {
 			w.failJob(jobID, fmt.Sprintf("PDF to DOCX conversion failed: %v", err))
+			return
+		}
+		generatedOutputs = append(generatedOutputs, outputLocalPath)
+
+	// OCR Operations
+	case "image_to_txt":
+		outMime = "text/plain"
+		outputLocalPath = filepath.Join(jobScratch, "ocr_extracted.txt")
+		lang := "eng"
+		if l, ok := task.Parameters["language"].(string); ok && l != "" {
+			lang = l
+		}
+		opts := engine.OCROptions{Language: lang}
+		if err := w.ocrEngine.ImageToText(ctx, localInput, opts, outputLocalPath); err != nil {
+			w.failJob(jobID, fmt.Sprintf("Image OCR text extraction failed: %v", err))
+			return
+		}
+		generatedOutputs = append(generatedOutputs, outputLocalPath)
+
+	case "image_to_searchable_pdf":
+		outMime = "application/pdf"
+		outputLocalPath = filepath.Join(jobScratch, "searchable.pdf")
+		lang := "eng"
+		if l, ok := task.Parameters["language"].(string); ok && l != "" {
+			lang = l
+		}
+		opts := engine.OCROptions{Language: lang}
+		if err := w.ocrEngine.ImageToSearchablePDF(ctx, localInput, opts, outputLocalPath); err != nil {
+			w.failJob(jobID, fmt.Sprintf("Searchable PDF creation failed: %v", err))
+			return
+		}
+		generatedOutputs = append(generatedOutputs, outputLocalPath)
+
+	case "pdf_ocr":
+		outMime = "application/pdf"
+		outputLocalPath = filepath.Join(jobScratch, "searchable.pdf")
+		lang := "eng"
+		if l, ok := task.Parameters["language"].(string); ok && l != "" {
+			lang = l
+		}
+		opts := engine.OCROptions{Language: lang, DPI: 200}
+		if err := w.ocrEngine.PDFToSearchablePDF(ctx, localInput, opts, outputLocalPath); err != nil {
+			w.failJob(jobID, fmt.Sprintf("PDF OCR searchable layer generation failed: %v", err))
 			return
 		}
 		generatedOutputs = append(generatedOutputs, outputLocalPath)
