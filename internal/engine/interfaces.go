@@ -85,6 +85,20 @@ type DocumentConverter interface {
 	ConvertToHTML(ctx context.Context, inputPath string, outputPath string) error
 }
 
+type OCROptions struct {
+	Language string // "eng", "spa", "fra", "deu", etc. Default "eng"
+	DPI      int    // Default 200/300
+	Deskew   bool
+}
+
+// OCREngine handles text recognition and searchable PDF creation.
+type OCREngine interface {
+	Name() string
+	ImageToText(ctx context.Context, inputPath string, opts OCROptions, outputPath string) error
+	ImageToSearchablePDF(ctx context.Context, inputPath string, opts OCROptions, outputPath string) error
+	PDFToSearchablePDF(ctx context.Context, inputPath string, opts OCROptions, outputPath string) error
+}
+
 // OutputValidator verifies generated file integrity prior to storage delivery.
 type OutputValidator interface {
 	Name() string
@@ -96,6 +110,6 @@ type OutputValidator interface {
 }
 
 func fileExists(p string) bool {
-	fi, err := os.Stat(p)
-	return err == nil && fi.Size() > 0
+	_, err := os.Stat(p)
+	return err == nil
 }
