@@ -283,7 +283,7 @@ export function Navbar({ onSelectTool, onSelectCategory }: NavbarProps) {
         <div className="flex items-center space-x-3">
           <div className="hidden sm:flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
             <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
-            <span>1-Hour Auto Purge</span>
+            <span>100% Private & Secure</span>
           </div>
 
           {/* Mobile menu button */}
