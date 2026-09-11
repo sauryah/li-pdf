@@ -150,3 +150,38 @@ export async function fetchJobDetails(jobId: string): Promise<JobDetailResponse>
   if (!res.ok) throw new Error('Failed to fetch job');
   return res.json();
 }
+
+export interface BatchJobItem {
+  upload_id: string;
+  operation: string;
+  parameters?: Record<string, any>;
+}
+
+export interface BatchCreateResponse {
+  batch_id: string;
+  total: number;
+  jobs: Array<{
+    job_id: string;
+    upload_id: string;
+    operation: string;
+    status: string;
+    resource_profile: string;
+    events_stream_url: string;
+    error?: string;
+  }>;
+}
+
+export async function createBatchJobs(jobs: BatchJobItem[]): Promise<BatchCreateResponse> {
+  const res = await fetch(`${API_BASE}/v1/jobs/batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jobs }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to submit batch jobs');
+  }
+
+  return res.json();
+}
