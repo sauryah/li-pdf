@@ -510,7 +510,7 @@ export default function HomePage() {
 
         {/* Category Filter Tabs & Tool Grid */}
         {step === 'idle' && (
-          <div className="mt-8 pt-10 border-t border-slate-200/80">
+          <div id="capabilities-catalog" className="mt-8 pt-10 border-t border-slate-200/80">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-2xl font-black text-slate-900 tracking-tight">
