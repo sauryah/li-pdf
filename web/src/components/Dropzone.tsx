@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, DragEvent, ChangeEvent } from 'react';
-import { UploadCloud, File, AlertCircle, Sparkles } from 'lucide-react';
+import { UploadCloud, File, AlertCircle, Sparkles, FolderUp } from 'lucide-react';
 
 interface DropzoneProps {
   onFileSelected: (file: File) => void;
@@ -56,8 +56,8 @@ export function Dropzone({ onFileSelected, isUploading = false }: DropzoneProps)
         onClick={() => inputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-3xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-200 ${
           isDragging
-            ? 'border-blue-500 bg-blue-50/50 scale-[1.01]'
-            : 'border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50/50 shadow-sm hover:shadow'
+            ? 'border-red-500 bg-red-50/50 scale-[1.01]'
+            : 'border-slate-300 hover:border-red-400 bg-white hover:bg-slate-50/40 shadow-sm hover:shadow'
         }`}
       >
         <input
@@ -69,32 +69,36 @@ export function Dropzone({ onFileSelected, isUploading = false }: DropzoneProps)
           accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.rtf,.txt,.html"
         />
 
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-4 shadow-sm">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 mb-5 shadow-sm">
           <UploadCloud className="w-8 h-8" />
         </div>
 
-        <h3 className="text-xl font-semibold text-slate-900 mb-2">
-          Drop your Document, PDF, or Image here
-        </h3>
-        <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
-          Supports <span className="font-medium text-slate-700">PDF, DOCX, XLSX, PPTX, RTF, TXT, HTML, JPG, PNG, WebP</span> up to 500MB. Direct-to-storage streaming with zero server payload buffering.
-        </p>
-
-        <div className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-colors">
-          <span>Choose File from Computer</span>
+        <div className="mb-6">
+          <button
+            type="button"
+            className="inline-flex items-center space-x-2 px-8 py-4 rounded-2xl bg-red-600 text-white text-base font-bold shadow-lg shadow-red-600/25 hover:bg-red-700 active:scale-[0.98] transition-all"
+          >
+            <FolderUp className="w-5 h-5" />
+            <span>Select PDF or Document</span>
+          </button>
+          <p className="text-xs text-slate-400 mt-2 font-medium">or drop files here</p>
         </div>
 
-        <div className="mt-6 flex items-center justify-center space-x-4 text-xs font-medium text-slate-400">
+        <p className="text-xs text-slate-500 max-w-md mx-auto mb-6">
+          Supports <span className="font-semibold text-slate-700">PDF, Word (DOCX), Excel (XLSX), PPTX, Images (JPG, PNG, WebP), RTF, TXT, HTML</span> up to 500MB.
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs font-medium text-slate-400">
           <span>⚡ Sub-second engine routing</span>
           <span>•</span>
-          <span>🔒 Network-isolated sandbox</span>
+          <span>🔒 Non-root sandbox isolation</span>
           <span>•</span>
-          <span>🛡️ Ephemeral TTL storage</span>
+          <span>🛡️ 1-Hour ephemeral auto-deletion</span>
         </div>
       </div>
 
       {error && (
-        <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center space-x-2">
+        <div className="mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center space-x-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
