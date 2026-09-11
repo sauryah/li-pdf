@@ -17,3 +17,14 @@ body {
     );
   min-height: 100vh;
 }
+
+/* Hide Next.js Development Badge Overlay */
+nextjs-portal,
+div[data-nextjs-toast-wrapper],
+div[data-nextjs-dev-indicator],
+#__next-build-watcher {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
