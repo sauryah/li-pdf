@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Download, CheckCircle2, Clock, RotateCcw, ShieldCheck, ArrowDownCircle, FileText } from 'lucide-react';
+import React from 'react';
+import { Download, CheckCircle2, RotateCcw, ShieldCheck } from 'lucide-react';
 import { JobDetailResponse } from '../lib/api';
 
 interface ResultCardProps {
@@ -11,20 +11,6 @@ interface ResultCardProps {
 }
 
 export function ResultCard({ jobData, originalFile, onReset }: ResultCardProps) {
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(3600); // 1 hour TTL countdown
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -112,15 +98,15 @@ export function ResultCard({ jobData, originalFile, onReset }: ResultCardProps) 
         </button>
       </div>
 
-      {/* Auto-destruct & Privacy Assurance Badges */}
+      {/* Privacy Assurance Badges */}
       <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
-        <div className="inline-flex items-center space-x-1.5 bg-slate-100 text-slate-600 px-3.5 py-1.5 rounded-full font-medium">
-          <Clock className="w-3.5 h-3.5 text-slate-400" />
-          <span>Auto-purges in <strong className="text-slate-800">{formatTime(secondsRemaining)}</strong></span>
-        </div>
         <div className="inline-flex items-center space-x-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3.5 py-1.5 rounded-full font-medium">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>Zero Data Retention Active</span>
+        </div>
+        <div className="inline-flex items-center space-x-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3.5 py-1.5 rounded-full font-medium">
+          <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+          <span>Output Validator Gate Passed</span>
         </div>
       </div>
     </div>
