@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    container_name: lipdf_api
+    ports:
+      - "8085:8085"
+    environment:
+      - PORT=8085
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/lipdf?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - STORAGE_TYPE=local
+      - STORAGE_DIR=/app/data/storage
+      - MAX_UPLOAD_MB=500
+    volumes:
+      - lipdf_storage:/app/data/storage
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: lipdf_postgres
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=lipdf
+    volumes:
+      - lipdf_pgdata:/var/lib/postgresql/data
+      - ../migrations:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: lipdf_redis
+    ports:
+      - "6385:6379"
+    volumes:
+      - lipdf_redisdata:/data
+    restart: unless-stopped
+
+volumes:
+  lipdf_storage:
+  lipdf_pgdata:
+  lipdf_redisdata:
