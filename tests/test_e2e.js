@@ -10,7 +10,7 @@
 
 const http = require('http');
 
-const API_BASE = process.env.API_BASE || 'http://localhost:8085';
+const API_BASE = process.env.API_BASE || 'http://127.0.0.1:8085';
 
 function log(msg) {
   console.log(`\x1b[34m[TEST]\x1b[0m ${msg}`);
@@ -104,7 +104,7 @@ async function runTests() {
   }
 
   const uploadId = presignRes.body.upload_id;
-  const uploadUrl = presignRes.body.upload_url;
+  const uploadUrl = presignRes.body.upload_url.replace('http://localhost:8085', API_BASE);
   success(`Presigned upload slot created (ID: ${uploadId})`);
 
   // Direct Upload to Storage URL
@@ -213,7 +213,7 @@ async function runTests() {
   }
 
   // 6. Verify Signed Download URL
-  const downloadUrl = out.download_url;
+  const downloadUrl = (out.download_url || '').replace('http://localhost:8085', API_BASE);
   log(`Verifying signed download URL: ${downloadUrl}...`);
   const downloadRes = await request(downloadUrl);
   if (downloadRes.status === 200 && downloadRes.buffer.length > 0) {
