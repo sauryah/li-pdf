@@ -70,6 +70,7 @@ func main() {
 	pdfEng := engine.NewQPDFStructuralProcessor()
 	pdfRen := engine.NewPopplerPDFRenderer()
 	imgEng := engine.NewVipsImageProcessor()
+	docEng := engine.NewLibreOfficeDocumentConverter()
 
 	// 4. Initialize API Handler & SSE Hub
 	apiH := api.NewAPIHandler(cfg, reg, pf, st, q)
@@ -77,8 +78,8 @@ func main() {
 	router := api.SetupRouter(apiH, sseHub)
 
 	// 5. Start Embedded Background Worker Supervisor
-	supervisor := worker.NewWorkerSupervisor(cfg, q, st, val, pdfEng, pdfRen, imgEng, apiH)
-	workerQueues := []string{"queue_image_fast", "queue_pdf_std", "queue_pdf_heavy"}
+	supervisor := worker.NewWorkerSupervisor(cfg, q, st, val, pdfEng, pdfRen, imgEng, docEng, apiH)
+	workerQueues := []string{"queue_image_fast", "queue_pdf_std", "queue_pdf_heavy", "queue_office"}
 	go supervisor.Start(ctx, workerQueues)
 
 	// 6. Start HTTP Server
