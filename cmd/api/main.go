@@ -71,15 +71,22 @@ func main() {
 	pdfRen := engine.NewPopplerPDFRenderer()
 	imgEng := engine.NewVipsImageProcessor()
 	docEng := engine.NewLibreOfficeDocumentConverter()
+	ocrEng := engine.NewTesseractOCREngine()
 
 	// 4. Initialize API Handler & SSE Hub
 	apiH := api.NewAPIHandler(cfg, reg, pf, st, q)
 	sseHub := api.NewSSEHub(q)
 	router := api.SetupRouter(apiH, sseHub)
 
-	// 5. Start Embedded Background Worker Supervisor
-	supervisor := worker.NewWorkerSupervisor(cfg, q, st, val, pdfEng, pdfRen, imgEng, docEng, apiH)
-	workerQueues := []string{"queue_image_fast", "queue_pdf_std", "queue_pdf_heavy", "queue_office"}
+	// 5. Start Background Ephemeral Storage Purger
+	if cfg.StorageType == "local" {
+		purger := storage.NewStoragePurger(cfg.StorageDir, st)
+		go purger.Start(ctx, 5*time.Minute, cfg.DefaultTTL)
+	}
+
+	// 6. Start Embedded Background Worker Supervisor
+	supervisor := worker.NewWorkerSupervisor(cfg, q, st, val, pdfEng, pdfRen, imgEng, docEng, ocrEng, apiH)
+	workerQueues := []string{"queue_image_fast", "queue_pdf_std", "queue_pdf_heavy", "queue_office", "queue_ocr"}
 	go supervisor.Start(ctx, workerQueues)
 
 	// 6. Start HTTP Server
