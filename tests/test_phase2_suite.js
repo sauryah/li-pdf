@@ -10,7 +10,7 @@
 
 const http = require('http');
 
-const API_BASE = process.env.API_BASE || 'http://localhost:8085';
+const API_BASE = process.env.API_BASE || 'http://127.0.0.1:8085';
 
 function log(msg) {
   console.log(`\x1b[34m[TEST]\x1b[0m ${msg}`);
@@ -27,7 +27,8 @@ function fail(msg) {
 
 async function request(url, options = {}, body = null) {
   return new Promise((resolve, reject) => {
-    const parsed = new URL(url);
+    const targetUrl = url.replace('http://localhost:8085', API_BASE);
+    const parsed = new URL(targetUrl);
     const reqOptions = {
       hostname: parsed.hostname,
       port: parsed.port,
