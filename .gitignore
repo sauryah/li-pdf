@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+web/node_modules/
+package-lock.json
+web/package-lock.json
+
+# Next.js & Frontend Build Outputs
+.next/
+web/.next/
+out/
+web/out/
+build/
+dist/
+
+# Go Binaries & Tests
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Local Storage & Temporary Files
+data/storage/
+*.tmp
+*.log
+scratch/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System & IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
