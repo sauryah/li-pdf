@@ -1,0 +1,38 @@
+# Stage 1: Build binary
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /build
+COPY go.mod ./
+RUN go mod download || true
+
+COPY . .
+RUN go mod tidy
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /bin/api ./cmd/api
+
+# Stage 2: Minimal hardened runtime with conversion engines
+FROM alpine:3.20
+
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    qpdf \
+    poppler-utils \
+    vips-tools \
+    libwebp-tools \
+    zip \
+    file
+
+WORKDIR /app
+
+# Create unprivileged runtime user and data directory
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    mkdir -p /app/data/storage && \
+    chown -R appuser:appgroup /app
+
+USER appuser
+
+COPY --from=builder --chown=appuser:appgroup /bin/api /app/api
+
+EXPOSE 8085
+
+ENTRYPOINT ["/app/api"]
