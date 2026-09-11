@@ -18,7 +18,6 @@ import {
   ShieldCheck,
   Zap,
   Lock,
-  Cpu,
   Sparkles,
   CheckCircle2,
   FileText,
@@ -30,251 +29,254 @@ import {
   FileSpreadsheet,
   Layers,
   ArrowRight,
+  Split,
+  Combine,
+  Unlock,
 } from 'lucide-react';
 
 type Step = 'idle' | 'configuring' | 'uploading' | 'processing' | 'completed' | 'failed';
-type CategoryTab = 'all' | 'pdf' | 'image' | 'compression' | 'office' | 'security';
+type CategoryTab = 'all' | 'organize' | 'optimize' | 'convert_to' | 'convert_from' | 'security' | 'image';
 
 interface ToolItem {
   id: string;
   name: string;
   description: string;
-  category: 'pdf' | 'image' | 'compression' | 'office' | 'security';
+  category: CategoryTab;
   operation: string;
   accepts: string;
-  badge: string;
+  badge?: string;
   icon: any;
+  iconBg: string;
+  iconColor: string;
 }
 
 const TOOLS_CATALOG: ToolItem[] = [
-  // PDF Tools
-  {
-    id: 'pdf_compress',
-    name: 'Compress PDF',
-    description: 'Reduce PDF file size with lossless Flate stream deduplication or balanced DPI downsampling.',
-    category: 'pdf',
-    operation: 'pdf_compress',
-    accepts: '.pdf',
-    badge: 'Fast',
-    icon: Minimize2,
-  },
-  {
-    id: 'pdf_to_jpg',
-    name: 'PDF to JPG',
-    description: 'Extract every page of a PDF document as high-DPI crisp JPEG raster images.',
-    category: 'pdf',
-    operation: 'pdf_to_jpg',
-    accepts: '.pdf',
-    badge: '300 DPI',
-    icon: ImageIcon,
-  },
-  {
-    id: 'pdf_to_png',
-    name: 'PDF to PNG',
-    description: 'Convert PDF pages into lossless transparent PNG graphics.',
-    category: 'pdf',
-    operation: 'pdf_to_png',
-    accepts: '.pdf',
-    badge: 'Lossless',
-    icon: ImageIcon,
-  },
+  // Organize PDF
   {
     id: 'pdf_rotate',
     name: 'Rotate PDF',
-    description: 'Permanently rotate PDF orientation by 90°, 180°, or 270° clockwise.',
-    category: 'pdf',
+    description: 'Rotate your PDF pages horizontally or vertically. Save and download your permanently adjusted pages.',
+    category: 'organize',
     operation: 'pdf_rotate',
     accepts: '.pdf',
-    badge: 'Layout',
+    badge: 'Organize',
     icon: RotateCw,
-  },
-  {
-    id: 'pdf_to_docx',
-    name: 'PDF to Word (DOCX)',
-    description: 'Reflow and reconstruct PDF layout into editable OpenXML Microsoft Word document.',
-    category: 'pdf',
-    operation: 'pdf_to_docx',
-    accepts: '.pdf',
-    badge: 'Editable',
-    icon: FileText,
-  },
-  {
-    id: 'pdf_to_txt',
-    name: 'PDF to Text',
-    description: 'Extract plain UTF-8 text with strict structural coordinate preservation.',
-    category: 'pdf',
-    operation: 'pdf_to_txt',
-    accepts: '.pdf',
-    badge: 'Instant',
-    icon: FileText,
+    iconBg: 'bg-red-50 group-hover:bg-red-600',
+    iconColor: 'text-[#E5322D] group-hover:text-white',
   },
   {
     id: 'pdf_to_html',
     name: 'PDF to HTML',
-    description: 'Convert PDF document into web-ready vector XHTML/HTML pages.',
-    category: 'pdf',
+    description: 'Convert PDF files into responsive, clean XHTML/HTML web pages retaining font metrics.',
+    category: 'organize',
     operation: 'pdf_to_html',
     accepts: '.pdf',
     badge: 'Web Ready',
     icon: FileCode,
+    iconBg: 'bg-cyan-50 group-hover:bg-cyan-600',
+    iconColor: 'text-cyan-600 group-hover:text-white',
+  },
+
+  // Optimize PDF
+  {
+    id: 'pdf_compress',
+    name: 'Compress PDF',
+    description: 'Reduce file size while optimizing for maximum PDF quality with smart raster classification.',
+    category: 'optimize',
+    operation: 'pdf_compress',
+    accepts: '.pdf',
+    badge: 'Popular',
+    icon: Minimize2,
+    iconBg: 'bg-emerald-50 group-hover:bg-emerald-600',
+    iconColor: 'text-emerald-600 group-hover:text-white',
+  },
+  {
+    id: 'pdf_ocr',
+    name: 'OCR PDF',
+    description: 'Convert scanned non-selectable PDF documents into fully searchable PDFs with an accurate text layer.',
+    category: 'optimize',
+    operation: 'pdf_ocr',
+    accepts: '.pdf',
+    badge: 'Tesseract 5',
+    icon: FileCheck2,
+    iconBg: 'bg-violet-50 group-hover:bg-violet-600',
+    iconColor: 'text-violet-600 group-hover:text-white',
+  },
+
+  // Convert to PDF
+  {
+    id: 'jpg_to_pdf',
+    name: 'JPG to PDF',
+    description: 'Convert JPG, JPEG, and PNG images to PDF documents in seconds. Easily adjust orientation and margins.',
+    category: 'convert_to',
+    operation: 'jpg_to_pdf',
+    accepts: '.jpg,.jpeg,.png',
+    badge: 'Image',
+    icon: ImageIcon,
+    iconBg: 'bg-amber-50 group-hover:bg-amber-600',
+    iconColor: 'text-amber-600 group-hover:text-white',
+  },
+  {
+    id: 'docx_to_pdf',
+    name: 'WORD to PDF',
+    description: 'Convert Microsoft Word (.docx, .doc) documents into standard pixel-perfect PDFs with exact formatting.',
+    category: 'convert_to',
+    operation: 'docx_to_pdf',
+    accepts: '.docx,.doc',
+    badge: 'Office',
+    icon: FileText,
+    iconBg: 'bg-blue-50 group-hover:bg-blue-600',
+    iconColor: 'text-blue-600 group-hover:text-white',
+  },
+  {
+    id: 'pptx_to_pdf',
+    name: 'POWERPOINT to PDF',
+    description: 'Convert Microsoft PowerPoint presentations (.pptx, .ppt) into crisp PDF slide decks.',
+    category: 'convert_to',
+    operation: 'pptx_to_pdf',
+    accepts: '.pptx,.ppt',
+    badge: 'Slides',
+    icon: Layers,
+    iconBg: 'bg-orange-50 group-hover:bg-orange-600',
+    iconColor: 'text-orange-600 group-hover:text-white',
+  },
+  {
+    id: 'xlsx_to_pdf',
+    name: 'EXCEL to PDF',
+    description: 'Convert Microsoft Excel spreadsheets (.xlsx, .xls) into high-fidelity printable PDF sheets.',
+    category: 'convert_to',
+    operation: 'xlsx_to_pdf',
+    accepts: '.xlsx,.xls',
+    badge: 'Spreadsheet',
+    icon: FileSpreadsheet,
+    iconBg: 'bg-emerald-50 group-hover:bg-emerald-600',
+    iconColor: 'text-emerald-700 group-hover:text-white',
+  },
+
+  // Convert from PDF
+  {
+    id: 'pdf_to_docx',
+    name: 'PDF to WORD',
+    description: 'Convert PDF documents to editable Microsoft Word (.docx) files with unmatched precision.',
+    category: 'convert_from',
+    operation: 'pdf_to_docx',
+    accepts: '.pdf',
+    badge: 'Editable',
+    icon: FileText,
+    iconBg: 'bg-blue-50 group-hover:bg-blue-600',
+    iconColor: 'text-blue-600 group-hover:text-white',
+  },
+  {
+    id: 'pdf_to_jpg',
+    name: 'PDF to JPG',
+    description: 'Extract all pages from your PDF or convert each PDF page into high-resolution 300 DPI JPG images.',
+    category: 'convert_from',
+    operation: 'pdf_to_jpg',
+    accepts: '.pdf',
+    badge: '300 DPI',
+    icon: ImageIcon,
+    iconBg: 'bg-amber-50 group-hover:bg-amber-600',
+    iconColor: 'text-amber-600 group-hover:text-white',
+  },
+  {
+    id: 'pdf_to_png',
+    name: 'PDF to PNG',
+    description: 'Render crisp lossless transparent PNG raster images from your PDF pages.',
+    category: 'convert_from',
+    operation: 'pdf_to_png',
+    accepts: '.pdf',
+    badge: 'Lossless',
+    icon: ImageIcon,
+    iconBg: 'bg-teal-50 group-hover:bg-teal-600',
+    iconColor: 'text-teal-600 group-hover:text-white',
+  },
+  {
+    id: 'pdf_to_txt',
+    name: 'PDF to TEXT',
+    description: 'Extract clean raw UTF-8 text from any PDF document with instant structural coordinate alignment.',
+    category: 'convert_from',
+    operation: 'pdf_to_txt',
+    accepts: '.pdf',
+    badge: 'Fast',
+    icon: FileText,
+    iconBg: 'bg-slate-100 group-hover:bg-slate-700',
+    iconColor: 'text-slate-700 group-hover:text-white',
+  },
+
+  // PDF Security
+  {
+    id: 'pdf_encrypt',
+    name: 'Protect PDF',
+    description: 'Encrypt your PDF with robust military-grade AES-256 password protection to prevent unauthorized access.',
+    category: 'security',
+    operation: 'pdf_encrypt',
+    accepts: '.pdf',
+    badge: 'AES-256',
+    icon: Lock,
+    iconBg: 'bg-rose-50 group-hover:bg-rose-600',
+    iconColor: 'text-[#E5322D] group-hover:text-white',
+  },
+  {
+    id: 'pdf_decrypt',
+    name: 'Unlock PDF',
+    description: 'Remove PDF password security and permissions restrictions so you can freely edit, print, or view.',
+    category: 'security',
+    operation: 'pdf_decrypt',
+    accepts: '.pdf',
+    badge: 'Decrypt',
+    icon: Unlock,
+    iconBg: 'bg-slate-100 group-hover:bg-slate-800',
+    iconColor: 'text-slate-800 group-hover:text-white',
   },
 
   // Image Utilities
   {
     id: 'png_to_webp',
     name: 'PNG to WebP',
-    description: 'Convert heavy PNG images to ultra-lightweight WebP format (saving up to 80% bandwidth).',
+    description: 'Convert large PNG images into next-gen lightweight WebP files saving up to 80% bandwidth.',
     category: 'image',
     operation: 'png_to_webp',
     accepts: '.png',
     badge: 'Next-Gen',
     icon: ImageIcon,
+    iconBg: 'bg-teal-50 group-hover:bg-teal-600',
+    iconColor: 'text-teal-600 group-hover:text-white',
   },
   {
     id: 'jpg_to_webp',
     name: 'JPG to WebP',
-    description: 'Convert JPEG photos into optimized modern WebP with lossless or lossy compression.',
+    description: 'Convert JPEG photos into modern WebP with superior lossless and lossy compression.',
     category: 'image',
     operation: 'jpg_to_webp',
     accepts: '.jpg,.jpeg',
     badge: 'WebP',
     icon: ImageIcon,
+    iconBg: 'bg-emerald-50 group-hover:bg-emerald-600',
+    iconColor: 'text-emerald-600 group-hover:text-white',
   },
   {
     id: 'image_resize',
     name: 'Resize Image',
-    description: 'Rescale photos to custom dimensions using Catmull-Rom high-fidelity resampling.',
+    description: 'Rescale photos to custom dimensions with Catmull-Rom high-fidelity image filtering.',
     category: 'image',
     operation: 'image_resize',
     accepts: '.jpg,.jpeg,.png,.webp',
     badge: 'Lanczos',
     icon: ImageIcon,
-  },
-  {
-    id: 'jpg_to_pdf',
-    name: 'JPG to PDF',
-    description: 'Package one or multiple JPEG photographs into a clean standardized PDF.',
-    category: 'image',
-    operation: 'jpg_to_pdf',
-    accepts: '.jpg,.jpeg',
-    badge: 'Packaging',
-    icon: FileText,
-  },
-  {
-    id: 'png_to_pdf',
-    name: 'PNG to PDF',
-    description: 'Convert transparent or solid PNG graphics into a standardized PDF document.',
-    category: 'image',
-    operation: 'png_to_pdf',
-    accepts: '.png',
-    badge: 'Packaging',
-    icon: FileText,
-  },
-
-  // Compression
-  {
-    id: 'pdf_compress_heavy',
-    name: 'PDF Stream Optimizer',
-    description: 'Deep QPDF structural stream linearizer and cross-reference table deduplicator.',
-    category: 'compression',
-    operation: 'pdf_compress',
-    accepts: '.pdf',
-    badge: 'QPDF',
-    icon: Minimize2,
-  },
-  {
-    id: 'image_compress',
-    name: 'Image Compressor',
-    description: 'Fine-tune JPEG and WebP quantization matrices to dramatically shrink image sizes.',
-    category: 'compression',
-    operation: 'image_compress',
-    accepts: '.jpg,.jpeg,.png',
-    badge: 'Optimizer',
-    icon: Minimize2,
-  },
-
-  // Office & OCR
-  {
-    id: 'docx_to_pdf',
-    name: 'DOCX to PDF',
-    description: 'Convert Microsoft Word DOCX documents into pixel-perfect PDF via headless LibreOffice.',
-    category: 'office',
-    operation: 'docx_to_pdf',
-    accepts: '.docx,.doc',
-    badge: 'LibreOffice',
-    icon: FileText,
-  },
-  {
-    id: 'xlsx_to_pdf',
-    name: 'Excel to PDF',
-    description: 'Convert Microsoft Excel spreadsheets (.xlsx, .xls) into printable PDF tables.',
-    category: 'office',
-    operation: 'xlsx_to_pdf',
-    accepts: '.xlsx,.xls',
-    badge: 'Sheets',
-    icon: FileSpreadsheet,
-  },
-  {
-    id: 'pptx_to_pdf',
-    name: 'PowerPoint to PDF',
-    description: 'Convert Microsoft PowerPoint presentations (.pptx, .ppt) into vector PDF slide decks.',
-    category: 'office',
-    operation: 'pptx_to_pdf',
-    accepts: '.pptx,.ppt',
-    badge: 'Slides',
-    icon: Layers,
-  },
-  {
-    id: 'pdf_ocr',
-    name: 'Scanned PDF to Searchable PDF',
-    description: 'Tesseract 5 OCR layer synthesis. Injects an invisible searchable text layer over scans.',
-    category: 'office',
-    operation: 'pdf_ocr',
-    accepts: '.pdf',
-    badge: 'OCR 5.0',
-    icon: FileCheck2,
+    iconBg: 'bg-indigo-50 group-hover:bg-indigo-600',
+    iconColor: 'text-indigo-600 group-hover:text-white',
   },
   {
     id: 'image_to_searchable_pdf',
-    name: 'Image to Searchable PDF (OCR)',
-    description: 'Run OCR on photos or document snapshots and produce searchable PDFs with selectable text.',
-    category: 'office',
+    name: 'Image to OCR PDF',
+    description: 'Perform OCR on photos and receipts to create searchable PDF files with selectable text.',
+    category: 'image',
     operation: 'image_to_searchable_pdf',
     accepts: '.png,.jpg,.jpeg',
-    badge: 'OCR Layer',
+    badge: 'OCR',
     icon: FileCheck2,
-  },
-  {
-    id: 'image_to_txt',
-    name: 'Image OCR Text Extractor',
-    description: 'Extract raw recognized text from invoices, receipts, and photos directly to text.',
-    category: 'office',
-    operation: 'image_to_txt',
-    accepts: '.png,.jpg,.jpeg',
-    badge: 'Text Layer',
-    icon: FileText,
-  },
-
-  // Privacy & Security
-  {
-    id: 'pdf_encrypt',
-    name: 'Protect PDF (AES-256)',
-    description: 'Lock your sensitive PDF with military-grade AES-256 password encryption and permission flags.',
-    category: 'security',
-    operation: 'pdf_encrypt',
-    accepts: '.pdf',
-    badge: 'AES-256',
-    icon: Lock,
-  },
-  {
-    id: 'pdf_decrypt',
-    name: 'Unlock PDF',
-    description: 'Decrypt and remove password restrictions from password-protected PDF files.',
-    category: 'security',
-    operation: 'pdf_decrypt',
-    accepts: '.pdf',
-    badge: 'Decrypt',
-    icon: Lock,
+    iconBg: 'bg-violet-50 group-hover:bg-violet-600',
+    iconColor: 'text-violet-600 group-hover:text-white',
   },
 ];
 
@@ -297,19 +299,42 @@ export default function HomePage() {
       if (caps.length > 0) setCapabilities(caps);
     });
 
-    // Listen to hash changes in URL (e.g. from navbar clicks)
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'pdf-tools') setActiveTab('pdf');
-      else if (hash === 'image-tools') setActiveTab('image');
-      else if (hash === 'compression') setActiveTab('compression');
-      else if (hash === 'security') setActiveTab('security');
-      else if (hash === 'office-ocr') setActiveTab('office');
+    // Custom event listeners for header navigation integration
+    const onToolSelect = (e: any) => {
+      const { operation, accepts } = e.detail;
+      const matchedTool = TOOLS_CATALOG.find((t) => t.operation === operation);
+      setPendingTool(matchedTool || null);
+      if (fileInputRef.current) {
+        fileInputRef.current.accept = accepts || '*/*';
+        fileInputRef.current.click();
+      }
     };
 
-    handleHashChange();
+    const onCategorySelect = (e: any) => {
+      const cat = e.detail.category as CategoryTab;
+      setActiveTab(cat);
+    };
+
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'organize') setActiveTab('organize');
+      else if (hash === 'optimize') setActiveTab('optimize');
+      else if (hash === 'convert-to-pdf') setActiveTab('convert_to');
+      else if (hash === 'convert-from-pdf') setActiveTab('convert_from');
+      else if (hash === 'security') setActiveTab('security');
+      else if (hash === 'image-tools') setActiveTab('image');
+    };
+
+    window.addEventListener('lipdf:select_tool', onToolSelect);
+    window.addEventListener('lipdf:select_category', onCategorySelect);
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleHashChange();
+
+    return () => {
+      window.removeEventListener('lipdf:select_tool', onToolSelect);
+      window.removeEventListener('lipdf:select_category', onCategorySelect);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const handleFileSelected = (file: File, preselectedOp?: string) => {
@@ -393,7 +418,7 @@ export default function HomePage() {
   });
 
   return (
-    <div className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 w-full flex flex-col justify-between">
+    <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 w-full flex flex-col justify-between">
       {/* Hidden input for direct tool card clicks */}
       <input
         ref={fileInputRef}
@@ -403,22 +428,18 @@ export default function HomePage() {
       />
 
       <div>
-        {/* Hero Section */}
-        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-semibold mb-5 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Zero Data Retention • Deterministic High Fidelity • 33+ Tools</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Universal Document & Image Engine
+        {/* iLovePDF-style Hero Section */}
+        <div className="text-center max-w-4xl mx-auto mb-10 sm:mb-14">
+          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight sm:leading-tight">
+            Every tool you need to work with PDFs in one place
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Convert, compress, rotate, protect, and OCR your files with isolated workers and 1-hour automated ephemeral storage cleanup.
+          <p className="mt-4 text-base sm:text-xl text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
+            Every tool you need to use PDFs, at your fingertips. All are 100% free and easy to use! Merge, split, compress, convert, rotate, unlock and OCR PDFs with just a few clicks.
           </p>
         </div>
 
         {/* Interactive Workspace Area */}
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto mb-16">
           {step === 'idle' && (
             <Dropzone onFileSelected={(f) => handleFileSelected(f)} />
           )}
@@ -434,20 +455,20 @@ export default function HomePage() {
           )}
 
           {step === 'uploading' && (
-            <div className="bg-white border border-slate-200 rounded-3xl p-10 text-center shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 mb-2">
-                Uploading Directly to Storage...
+            <div className="bg-white border border-slate-200 rounded-3xl p-10 sm:p-14 text-center shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                Uploading Document...
               </h3>
               <p className="text-xs text-slate-500 mb-6">
-                Streaming payload directly to local storage / S3 without server buffering.
+                Direct-to-storage stream upload in progress.
               </p>
               <div className="w-full bg-slate-100 rounded-full h-3 max-w-md mx-auto overflow-hidden">
                 <div
-                  className="bg-blue-600 h-full rounded-full transition-all duration-200 ease-out"
+                  className="bg-[#E5322D] h-full rounded-full transition-all duration-200 ease-out"
                   style={{ width: `${uploadPercent}%` }}
                 />
               </div>
-              <span className="text-xs font-semibold text-slate-400 mt-2 block">{uploadPercent}%</span>
+              <span className="text-xs font-bold text-slate-500 mt-3 block">{uploadPercent}%</span>
             </div>
           )}
 
@@ -472,14 +493,14 @@ export default function HomePage() {
 
           {step === 'failed' && (
             <div className="bg-white border border-red-200 rounded-3xl p-10 text-center shadow-sm">
-              <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+              <div className="w-14 h-14 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 font-bold text-xl">
                 ✕
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">Processing Error</h3>
               <p className="text-sm text-red-600 mb-6">{errorMessage || 'An error occurred during conversion.'}</p>
               <button
                 onClick={handleReset}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800"
+                className="px-6 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors"
               >
                 Try Again
               </button>
@@ -487,42 +508,38 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Category Filter Tabs & Tool Catalog */}
+        {/* Category Filter Tabs & Tool Grid */}
         {step === 'idle' && (
-          <div className="mt-16 pt-12 border-t border-slate-200/80">
+          <div className="mt-8 pt-10 border-t border-slate-200/80">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                  Explore Platform Capabilities
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                  All PDF & Document Tools
                 </h2>
-                <p className="text-sm text-slate-500 mt-1">
-                  Click any tool below to upload your file and begin conversion immediately.
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Select a tool below to quickly convert, optimize, or secure your files.
                 </p>
               </div>
 
-              {/* Interactive Category Tabs */}
-              <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl overflow-x-auto">
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl overflow-x-auto max-w-full">
                 {[
-                  { id: 'all', label: 'All Tools' },
-                  { id: 'pdf', label: 'PDF Tools', href: '#pdf-tools' },
-                  { id: 'image', label: 'Image Utilities', href: '#image-tools' },
-                  { id: 'compression', label: 'Compression', href: '#compression' },
-                  { id: 'office', label: 'Office & OCR', href: '#office-ocr' },
-                  { id: 'security', label: 'Privacy & Security', href: '#security' },
+                  { id: 'all', label: 'All' },
+                  { id: 'organize', label: 'Organize PDF' },
+                  { id: 'optimize', label: 'Optimize PDF' },
+                  { id: 'convert_to', label: 'Convert to PDF' },
+                  { id: 'convert_from', label: 'Convert from PDF' },
+                  { id: 'security', label: 'PDF Security' },
+                  { id: 'image', label: 'Image Tools' },
                 ].map((tab) => {
                   const isActive = activeTab === tab.id;
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => {
-                        setActiveTab(tab.id as CategoryTab);
-                        if (tab.href) {
-                          window.location.hash = tab.href;
-                        }
-                      }}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                      onClick={() => setActiveTab(tab.id as CategoryTab)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                         isActive
-                          ? 'bg-white text-blue-700 shadow-xs ring-1 ring-slate-200'
+                          ? 'bg-white text-[#E5322D] shadow-xs ring-1 ring-slate-200'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                       }`}
                     >
@@ -534,34 +551,36 @@ export default function HomePage() {
             </div>
 
             {/* Grid of Tool Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {filteredTools.map((tool) => {
                 const IconComponent = tool.icon;
                 return (
                   <button
                     key={tool.id}
                     onClick={() => handleToolCardClick(tool)}
-                    className="group text-left p-5 rounded-2xl bg-white border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+                    className="group text-left p-6 rounded-2xl bg-white border border-slate-200/90 hover:border-slate-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 group-hover:bg-blue-600 text-blue-600 group-hover:text-white flex items-center justify-center transition-colors">
-                          <IconComponent className="w-5 h-5" />
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`w-12 h-12 rounded-2xl ${tool.iconBg} ${tool.iconColor} flex items-center justify-center transition-colors shadow-xs`}>
+                          <IconComponent className="w-6 h-6" />
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                          {tool.badge}
-                        </span>
+                        {tool.badge && (
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                            {tool.badge}
+                          </span>
+                        )}
                       </div>
-                      <h3 className="font-bold text-slate-900 group-hover:text-blue-600 text-base mb-1 transition-colors">
+                      <h3 className="font-extrabold text-slate-900 text-lg mb-1.5 group-hover:text-[#E5322D] transition-colors">
                         {tool.name}
                       </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed">
+                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
                         {tool.description}
                       </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600">
-                      <span>Accepts {tool.accepts}</span>
+                    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600 group-hover:text-[#E5322D] transition-colors">
+                      <span>{tool.accepts}</span>
                       <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                     </div>
                   </button>
@@ -572,35 +591,35 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Feature Pillar Grid */}
+      {/* Trust & Guarantee Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 pt-12 border-t border-slate-200/80">
-        <div id="security" className="p-6 rounded-2xl bg-white/60 border border-slate-200/60 shadow-xs">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 font-semibold">
+        <div className="p-6 rounded-2xl bg-white/70 border border-slate-200/70 shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-red-50 text-[#E5322D] flex items-center justify-center mb-3 font-semibold">
             <Lock className="w-5 h-5" />
           </div>
-          <h4 className="font-bold text-slate-900 mb-1">Hostile Input Isolation</h4>
+          <h4 className="font-bold text-slate-900 text-sm mb-1">Hostile Sandbox Isolation</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
-            All binary conversions run in non-root, network-isolated sandboxes with restricted cgroups.
+            All conversions run in non-root sandboxed worker processes with memory limits and isolated scratch spaces.
           </p>
         </div>
 
-        <div id="compression" className="p-6 rounded-2xl bg-white/60 border border-slate-200/60 shadow-xs">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 font-semibold">
-            <Zap className="w-5 h-5" />
+        <div className="p-6 rounded-2xl bg-white/70 border border-slate-200/70 shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 font-semibold">
+            <ShieldCheck className="w-5 h-5" />
           </div>
-          <h4 className="font-bold text-slate-900 mb-1">Selective Compression</h4>
+          <h4 className="font-bold text-slate-900 text-sm mb-1">Zero Data Retention</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
-            Classifies embedded images before recompression to protect 1-bit text masks, CCITT/JBIG2, and CMYK color profiles.
+            Uploaded and converted files are permanently deleted after 1 hour by our automated background purger.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white/60 border border-slate-200/60 shadow-xs">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 font-semibold">
+        <div className="p-6 rounded-2xl bg-white/70 border border-slate-200/70 shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 font-semibold">
             <CheckCircle2 className="w-5 h-5" />
           </div>
-          <h4 className="font-bold text-slate-900 mb-1">Output Validator Gate</h4>
+          <h4 className="font-bold text-slate-900 text-sm mb-1">Output Validator Gate</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
-            Strict automated parseability, page-count, and non-blank integrity validation before delivery.
+            Every output is validated for page count, visual integrity, and corruption before delivery to the client.
           </p>
         </div>
       </div>
