@@ -591,8 +591,146 @@ export default function HomePage() {
         )}
       </div>
 
+      {/* Workflow Automation Section */}
+      <div id="workflow-automation" className="mt-20 pt-16 border-t border-slate-200">
+        <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 text-white p-8 sm:p-14 shadow-2xl relative overflow-hidden">
+          <div className="absolute -right-16 -top-16 w-80 h-80 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="max-w-2xl relative z-10">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-red-600/20 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider mb-4">
+              <Zap className="w-3.5 h-3.5" />
+              <span>Multi-Step Chained Pipelines</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-4">
+              Create custom workflows & automate document tasks
+            </h2>
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
+              Chain multiple operations together — like running <strong>Tesseract 5 OCR</strong> on raw scans, applying <strong>QPDF stream compression</strong>, and sealing with <strong>AES-256 encryption</strong> in a single non-blocking execution.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => handleToolCardClick(TOOLS_CATALOG[0])}
+                className="px-6 py-3.5 rounded-2xl bg-[#E5322D] hover:bg-[#D42227] text-white font-extrabold text-sm shadow-lg shadow-red-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Create Automated Workflow
+              </button>
+              <a
+                href="#developers"
+                className="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-sm transition-all"
+              >
+                View Batch API Docs
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Work Your Way: Multi-Platform Ecosystem Cards */}
+      <div id="solutions" className="mt-20 pt-16 border-t border-slate-200">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Work your way — on any device, anywhere
+          </h2>
+          <p className="mt-3 text-base text-slate-600">
+            Whether on your workstation, smartphone, or integrating automated cloud APIs, enjoy frictionless performance.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Card 1: Desktop */}
+          <div id="desktop-app" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#E5322D] flex items-center justify-center mb-6">
+                <FileText className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">
+                Work offline with Desktop
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Batch edit, compress, and convert sensitive documents locally with zero internet dependency and hardware acceleration.
+              </p>
+            </div>
+            <div className="mt-8 pt-4 border-t border-slate-100">
+              <span className="text-xs font-bold text-[#E5322D] inline-flex items-center space-x-1">
+                <span>Available for Windows & macOS</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Mobile */}
+          <div id="mobile-web" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
+                <Layers className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">
+                On-the-go with Mobile Web
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Your favorite PDF and image tools right in your pocket. Snap photos of documents and convert to searchable PDFs on the fly.
+              </p>
+            </div>
+            <div className="mt-8 pt-4 border-t border-slate-100">
+              <span className="text-xs font-bold text-blue-600 inline-flex items-center space-x-1">
+                <span>iOS Safari & Android Chrome</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Business */}
+          <div id="business" className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">
+                Built for Enterprise & Teams
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Automated document workflows, strict zero-retention security guarantees, high-volume batch APIs, and Prometheus metrics.
+              </p>
+            </div>
+            <div className="mt-8 pt-4 border-t border-slate-100">
+              <span className="text-xs font-bold text-emerald-600 inline-flex items-center space-x-1">
+                <span>ISO 27001 Compliant Architecture</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dedicated Image Engine Showcase */}
+      <div id="image-studio" className="mt-20 pt-16 border-t border-slate-200">
+        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white shadow-xl flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="max-w-xl">
+            <div className="inline-block bg-white/20 text-white text-[11px] font-extrabold uppercase px-3 py-1 rounded-full mb-3 tracking-wider">
+              High-Fidelity Image Suite
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
+              Image utilities made fast, crisp, and simple
+            </h2>
+            <p className="text-white/90 text-sm leading-relaxed">
+              Experience lossless WebP conversions, Catmull-Rom dimension scaling, quantization matrix tuning, and photo OCR extraction.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => {
+                setActiveTab('image');
+                window.location.hash = '#image-tools';
+              }}
+              className="px-6 py-3.5 rounded-2xl bg-white text-slate-900 font-extrabold text-sm hover:bg-slate-100 shadow-md transition-all active:scale-[0.98]"
+            >
+              Explore Image Utilities
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Trust & Guarantee Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 pt-12 border-t border-slate-200/80">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 pt-14 border-t border-slate-200">
         <div className="p-6 rounded-2xl bg-white/70 border border-slate-200/70 shadow-xs">
           <div className="w-10 h-10 rounded-xl bg-red-50 text-[#E5322D] flex items-center justify-center mb-3 font-semibold">
             <Lock className="w-5 h-5" />
@@ -621,6 +759,44 @@ export default function HomePage() {
           <p className="text-xs text-slate-500 leading-relaxed">
             Every output is validated for page count, visual integrity, and corruption before delivery to the client.
           </p>
+        </div>
+      </div>
+
+      {/* Frequently Asked Questions Accordion */}
+      <div id="faq" className="mt-20 pt-16 border-t border-slate-200">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+            Frequently Asked Questions
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Everything you need to know about security, performance, and privacy.
+          </p>
+        </div>
+
+        <div className="max-w-3xl mx-auto space-y-4">
+          {[
+            {
+              q: 'How does the 1-hour automated ephemeral purge work?',
+              a: 'Every file uploaded and generated by our workers is tagged with an ephemeral TTL timestamp. An internal background purger sweeps the storage every few minutes to permanently delete all files older than 1 hour.',
+            },
+            {
+              q: 'Are my confidential documents secure during processing?',
+              a: 'Yes. All conversions run inside non-root, network-isolated sandboxes with strictly capped memory and CPU cgroups. We do not store, view, or train on any user document data.',
+            },
+            {
+              q: 'What is the Output Validator Gate?',
+              a: 'Before any file download link is provided, an automated validator verifies the integrity of the generated output (verifying PDF cross-reference tables, magic bytes, page counts, and non-blank page rendering).',
+            },
+            {
+              q: 'Can I process multiple files simultaneously in batch mode?',
+              a: 'Yes! Our architecture supports atomic batch submissions via the /v1/jobs/batch endpoint, distributing jobs across specialized queues (PDF, Office, OCR, Image) in parallel.',
+            },
+          ].map((item, idx) => (
+            <div key={idx} className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+              <h3 className="font-extrabold text-slate-900 text-base mb-2">{item.q}</h3>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">{item.a}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
