@@ -95,6 +95,12 @@ func (a *Analyzer) Analyze(ctx context.Context, filePath string, operation strin
 		analysis.AssignedQueue = "queue_office"
 	}
 
+	// OCR Operations Override
+	if operation == "pdf_ocr" || operation == "image_to_txt" || operation == "image_to_searchable_pdf" || (cap != nil && cap.RequiresOCR) {
+		analysis.ResourceProfile = models.ProfileOCRBatch
+		analysis.AssignedQueue = "queue_ocr"
+	}
+
 	return analysis, nil
 }
 
