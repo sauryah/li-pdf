@@ -2,7 +2,20 @@
 
 import React, { useState } from 'react';
 import { Capability } from '../lib/api';
-import { Settings2, ArrowRight, Layers, FileCheck2, Cpu, Lock, Unlock, RotateCw, Scaling } from 'lucide-react';
+import {
+  Settings2,
+  ArrowRight,
+  FileCheck2,
+  Cpu,
+  Lock,
+  Unlock,
+  RotateCw,
+  Scaling,
+  Sliders,
+  Trash2,
+  CheckCircle2,
+  FileText,
+} from 'lucide-react';
 
 interface CapabilitiesSelectorProps {
   file: File;
@@ -28,7 +41,7 @@ export function CapabilitiesSelector({
   });
 
   const [selectedOp, setSelectedOp] = useState<string>(
-    initialOperation && relevantCaps.some(c => c.operation === initialOperation)
+    initialOperation && relevantCaps.some((c) => c.operation === initialOperation)
       ? initialOperation
       : relevantCaps.length > 0
       ? relevantCaps[0].operation
@@ -78,233 +91,252 @@ export function CapabilitiesSelector({
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
+  const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="font-semibold text-lg text-slate-900 truncate max-w-md">
+    <div className="flex flex-col lg:flex-row gap-6 items-start w-full max-w-5xl mx-auto">
+      {/* Left Canvas: Document Thumbnail Card */}
+      <div className="flex-1 bg-surface-bg border border-slate-200 rounded-3xl p-6 sm:p-8 w-full flex flex-col justify-between shadow-xs">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-200/80">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Selected Document
+            </span>
+            <p className="text-xs text-slate-400 mt-0.5">Ready for isolated processing</p>
+          </div>
+          <button
+            onClick={onReset}
+            className="text-xs font-semibold text-slate-500 hover:text-red-600 flex items-center space-x-1 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Remove & Change</span>
+          </button>
+        </div>
+
+        {/* Thumbnail Preview Area */}
+        <div className="my-8 flex justify-center">
+          <div className="w-56 bg-white rounded-2xl p-5 shadow-tool-card border border-slate-200 text-center relative group">
+            <div className="h-48 bg-slate-50 rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm mb-2 shadow-xs">
+                {ext}
+              </div>
+              <span className="text-xs font-bold text-slate-700 px-2 py-0.5 rounded bg-slate-100">
+                {formatFileSize(file.size)}
+              </span>
+            </div>
+
+            <div className="font-bold text-xs text-slate-900 truncate" title={file.name}>
               {file.name}
-            </span>
-            <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
-              {formatFileSize(file.size)}
-            </span>
+            </div>
+
+            {selectedOp === 'pdf_rotate' && (
+              <button
+                type="button"
+                onClick={() => setRotationAngle((prev) => (prev + 90) % 360 || 360)}
+                className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow-md hover:bg-red-700 transition-colors"
+                title="Rotate +90°"
+              >
+                <RotateCw className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Preflight check passed. Select target operation below.
-          </p>
         </div>
-        <button
-          onClick={onReset}
-          className="text-xs font-medium text-slate-500 hover:text-slate-800 underline self-start sm:self-auto"
-        >
-          Change File
-        </button>
+
+        {/* Available Operations Picker */}
+        <div className="pt-4 border-t border-slate-200/80">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+            Switch Target Operation
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {relevantCaps.map((cap) => {
+              const isSelected = selectedOp === cap.operation;
+              return (
+                <button
+                  key={cap.operation}
+                  onClick={() => setSelectedOp(cap.operation)}
+                  className={`text-left p-3 rounded-xl border text-xs font-semibold transition-all ${
+                    isSelected
+                      ? 'border-red-600 bg-red-50/60 text-red-700 shadow-xs ring-1 ring-red-500/30'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="truncate capitalize">{cap.operation.replace(/_/g, ' ')}</div>
+                  <div className="text-[10px] text-slate-400 font-normal uppercase mt-0.5">{cap.target_ext}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-6">
-        <label className="block text-sm font-semibold text-slate-900 mb-3">
-          Available Operations
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {relevantCaps.map((cap) => {
-            const isSelected = selectedOp === cap.operation;
-            return (
-              <button
-                key={cap.operation}
-                onClick={() => setSelectedOp(cap.operation)}
-                className={`text-left p-4 rounded-2xl border transition-all ${
-                  isSelected
-                    ? 'border-blue-600 bg-blue-50/50 shadow-sm ring-2 ring-blue-500/20'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-sm text-slate-900 capitalize">
-                    {cap.operation.replace(/_/g, ' ')}
-                  </span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                    {cap.target_ext}
-                  </span>
+      {/* Right Sidebar: Options Configurator */}
+      <div className="w-full lg:w-[380px] bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-xs flex flex-col justify-between">
+        <div>
+          <div className="flex items-center space-x-2 pb-4 border-b border-slate-100 mb-5">
+            <Sliders className="w-5 h-5 text-red-600" />
+            <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">
+              {selectedOp.replace(/_/g, ' ')} Options
+            </h3>
+          </div>
+
+          {/* Compression Presets */}
+          {selectedOp === 'pdf_compress' && (
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                Compression Level
+              </label>
+              {[
+                { id: 'maximum_compression', title: 'Extreme Compression', desc: 'Maximum size reduction (96 DPI, Q=60)' },
+                { id: 'balanced', title: 'Recommended Compression', desc: 'Optimal quality & file size (150 DPI, Q=78)' },
+                { id: 'maximum_quality', title: 'Less Compression', desc: 'Highest visual quality (Lossless Flate)' },
+              ].map((opt) => (
+                <div
+                  key={opt.id}
+                  onClick={() => setQualityPreset(opt.id)}
+                  className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                    qualityPreset === opt.id
+                      ? 'border-red-600 bg-red-50/40 ring-1 ring-red-500/30'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900">{opt.title}</span>
+                    {qualityPreset === opt.id && <CheckCircle2 className="w-4 h-4 text-red-600" />}
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{opt.desc}</p>
                 </div>
-                <p className="text-xs text-slate-500 line-clamp-2">
-                  {cap.description}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+              ))}
+            </div>
+          )}
 
-      {/* Dynamic Options Configurator based on Operation */}
-      {selectedOp === 'pdf_compress' && (
-        <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center space-x-2 mb-3">
-            <Settings2 className="w-4 h-4 text-slate-700" />
-            <span className="text-sm font-semibold text-slate-900">Compression Preset</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { id: 'maximum_quality', label: 'Max Quality', desc: 'Lossless Flate deduplication' },
-              { id: 'balanced', label: 'Balanced (Recommended)', desc: '150 DPI downsample, Q=78' },
-              { id: 'maximum_compression', label: 'Max Compression', desc: '96 DPI downsample, Q=60' },
-            ].map((preset) => (
-              <button
-                key={preset.id}
-                onClick={() => setQualityPreset(preset.id)}
-                className={`p-3 rounded-xl text-left border text-xs transition-all ${
-                  qualityPreset === preset.id
-                    ? 'border-blue-600 bg-white shadow-sm font-medium text-blue-900'
-                    : 'border-slate-200 bg-white/50 text-slate-600 hover:bg-white'
-                }`}
-              >
-                <div className="font-semibold mb-0.5">{preset.label}</div>
-                <div className="text-[11px] text-slate-500">{preset.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+          {/* Rotation Angle */}
+          {selectedOp === 'pdf_rotate' && (
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                Rotation Orientation
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[90, 180, 270].map((deg) => (
+                  <button
+                    key={deg}
+                    onClick={() => setRotationAngle(deg)}
+                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                      rotationAngle === deg
+                        ? 'border-red-600 bg-red-50 text-red-600'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    +{deg}°
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-      {selectedOp === 'pdf_rotate' && (
-        <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center space-x-2 mb-3">
-            <RotateCw className="w-4 h-4 text-slate-700" />
-            <span className="text-sm font-semibold text-slate-900">Rotation Angle</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[90, 180, 270].map((angle) => (
-              <button
-                key={angle}
-                onClick={() => setRotationAngle(angle)}
-                className={`py-3 px-4 rounded-xl border text-xs font-semibold text-center transition-all ${
-                  rotationAngle === angle
-                    ? 'border-blue-600 bg-white shadow-sm text-blue-900'
-                    : 'border-slate-200 bg-white/50 text-slate-600 hover:bg-white'
-                }`}
-              >
-                +{angle}° Clockwise
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {(selectedOp === 'pdf_encrypt' || selectedOp === 'pdf_decrypt') && (
-        <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center space-x-2 mb-3">
-            {selectedOp === 'pdf_encrypt' ? <Lock className="w-4 h-4 text-slate-700" /> : <Unlock className="w-4 h-4 text-slate-700" />}
-            <span className="text-sm font-semibold text-slate-900">
-              {selectedOp === 'pdf_encrypt' ? 'Set AES-256 Protection Password' : 'Enter Password to Decrypt'}
-            </span>
-          </div>
-          <input
-            type="password"
-            placeholder="Enter password..."
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      )}
-
-      {selectedOp === 'image_resize' && (
-        <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center space-x-2 mb-3">
-            <Scaling className="w-4 h-4 text-slate-700" />
-            <span className="text-sm font-semibold text-slate-900">Custom Dimensions (Pixels)</span>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Target Width (px)</label>
+          {/* Password Protection */}
+          {(selectedOp === 'pdf_encrypt' || selectedOp === 'pdf_decrypt') && (
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {selectedOp === 'pdf_encrypt' ? 'Set AES-256 Passphrase' : 'Enter Password to Decrypt'}
+              </label>
               <input
-                type="number"
-                value={resizeW}
-                onChange={(e) => setResizeW(Number(e.target.value))}
-                className="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm bg-white"
+                type="password"
+                placeholder="Enter password..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Target Height (px)</label>
+          )}
+
+          {/* OCR Language */}
+          {(selectedOp === 'pdf_ocr' || selectedOp === 'image_to_txt' || selectedOp === 'image_to_searchable_pdf') && (
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                OCR Recognition Language
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { code: 'eng', name: 'English (Tesseract 5)' },
+                  { code: 'spa', name: 'Spanish (Español)' },
+                  { code: 'fra', name: 'French (Français)' },
+                  { code: 'deu', name: 'German (Deutsch)' },
+                ].map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setOcrLang(lang.code)}
+                    className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
+                      ocrLang === lang.code
+                        ? 'border-red-600 bg-red-50 text-red-600'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Image Resizing */}
+          {selectedOp === 'image_resize' && (
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                Target Dimensions
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[10px] text-slate-400 block mb-1">Width (px)</span>
+                  <input
+                    type="number"
+                    value={resizeW}
+                    onChange={(e) => setResizeW(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block mb-1">Height (px)</span>
+                  <input
+                    type="number"
+                    value={resizeH}
+                    onChange={(e) => setResizeH(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rasterization DPI */}
+          {selectedOp.startsWith('pdf_to_') && (
+            <div className="space-y-2 mt-4">
+              <div className="flex justify-between text-xs font-bold text-slate-700">
+                <span>Rendering DPI</span>
+                <span className="text-red-600">{dpi} DPI</span>
+              </div>
               <input
-                type="number"
-                value={resizeH}
-                onChange={(e) => setResizeH(Number(e.target.value))}
-                className="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm bg-white"
+                type="range"
+                min="72"
+                max="300"
+                step="75"
+                value={dpi}
+                onChange={(e) => setDpi(Number(e.target.value))}
+                className="w-full accent-red-600"
               />
             </div>
-          </div>
-        </div>
-      )}
-
-      {selectedOp.startsWith('pdf_to_') && (
-        <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-900">Rasterization Resolution (DPI)</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800">{dpi} DPI</span>
-          </div>
-          <input
-            type="range"
-            min="72"
-            max="300"
-            step="75"
-            value={dpi}
-            onChange={(e) => setDpi(Number(e.target.value))}
-            className="w-full accent-blue-600"
-          />
-          <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-            <span>72 DPI (Web Screen)</span>
-            <span>150 DPI (Balanced E-Book)</span>
-            <span>300 DPI (High-Res Print)</span>
-          </div>
-        </div>
-      )}
-
-      {(selectedOp === 'pdf_ocr' || selectedOp === 'image_to_txt' || selectedOp === 'image_to_searchable_pdf') && (
-        <div className="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
-          <div className="flex items-center space-x-2 mb-3">
-            <FileCheck2 className="w-4 h-4 text-slate-700" />
-            <span className="text-sm font-semibold text-slate-900">OCR Recognition Language</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { code: 'eng', name: 'English' },
-              { code: 'spa', name: 'Spanish' },
-              { code: 'fra', name: 'French' },
-              { code: 'deu', name: 'German' },
-            ].map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => setOcrLang(lang.code)}
-                className={`p-3 rounded-xl border text-xs font-medium text-center transition-all ${
-                  ocrLang === lang.code
-                    ? 'border-blue-600 bg-white shadow-sm font-semibold text-blue-900'
-                    : 'border-slate-200 bg-white/50 text-slate-600 hover:bg-white'
-                }`}
-              >
-                {lang.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Action Footer */}
-      <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100">
-        <div className="flex items-center space-x-2 text-xs text-slate-500">
-          <Cpu className="w-4 h-4 text-slate-400" />
-          <span>Assigned Queue: <strong className="text-slate-700">{currentCap?.queue || 'queue_pdf_std'}</strong></span>
-          <span>•</span>
-          <span>Profile: <strong className="text-slate-700">{currentCap?.resource_profile || 'PDF_STANDARD'}</strong></span>
+          )}
         </div>
 
-        <button
-          onClick={handleSubmit}
-          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-8 py-3.5 rounded-2xl bg-blue-600 text-white font-semibold text-sm shadow-lg shadow-blue-600/25 hover:bg-blue-700 active:scale-[0.98] transition-all"
-        >
-          <span>Convert & Process</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        {/* Big Red Process CTA Button */}
+        <div className="mt-8 pt-4 border-t border-slate-100">
+          <button
+            onClick={handleSubmit}
+            className="w-full py-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-lg shadow-red-600/25 flex items-center justify-center space-x-2 transition-all active:scale-[0.98]"
+          >
+            <span>PROCESS {selectedOp.replace(/_/g, ' ').toUpperCase()}</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
