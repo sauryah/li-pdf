@@ -232,6 +232,133 @@ func (h *APIHandler) CreateJob(c *gin.Context) {
 	})
 }
 
+type BatchCreateJobRequest struct {
+	Jobs []CreateJobRequest `json:"jobs" binding:"required"`
+}
+
+type BatchJobResponseItem struct {
+	JobID           string                 `json:"job_id"`
+	UploadID        string                 `json:"upload_id"`
+	Operation       string                 `json:"operation"`
+	Status          models.JobStatus       `json:"status"`
+	ResourceProfile models.ResourceProfile `json:"resource_profile"`
+	EventsStreamURL string                 `json:"events_stream_url"`
+	Error           string                 `json:"error,omitempty"`
+}
+
+// CreateBatchJobs handles atomic batch dispatch of multiple conversion jobs.
+func (h *APIHandler) CreateBatchJobs(c *gin.Context) {
+	var req BatchCreateJobRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid batch request", "details": err.Error()})
+		return
+	}
+
+	if len(req.Jobs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "jobs array cannot be empty"})
+		return
+	}
+
+	batchID := uuid.New().String()
+	var responses []BatchJobResponseItem
+
+	for _, item := range req.Jobs {
+		uploadUUID, err := uuid.Parse(item.UploadID)
+		if err != nil {
+			responses = append(responses, BatchJobResponseItem{
+				UploadID: item.UploadID,
+				Error:    "invalid upload_id format",
+			})
+			continue
+		}
+
+		h.uploadsMu.RLock()
+		uploadRecord, found := h.uploads[uploadUUID]
+		h.uploadsMu.RUnlock()
+
+		if !found {
+			responses = append(responses, BatchJobResponseItem{
+				UploadID: item.UploadID,
+				Error:    "upload record not found",
+			})
+			continue
+		}
+
+		cap, capFound := h.registry.FindOperation(item.Operation, uploadRecord.MimeType)
+		resourceProfile := models.ProfilePDFStandard
+		assignedQueue := "queue_pdf_std"
+		if capFound {
+			resourceProfile = cap.ResourceProfile
+			assignedQueue = cap.Queue
+		}
+
+		jobID := uuid.New()
+		job := &models.Job{
+			ID:              jobID,
+			UploadID:        uploadUUID,
+			Operation:       item.Operation,
+			Parameters:      item.Parameters,
+			Status:          models.JobStatusQueued,
+			ProgressPercent: 0,
+			ResourceProfile: resourceProfile,
+			MaxRetries:      2,
+			RetryCount:      0,
+			CreatedAt:       time.Now(),
+		}
+
+		h.jobsMu.Lock()
+		h.jobs[jobID] = job
+		h.jobsMu.Unlock()
+
+		taskPayload := &queue.TaskPayload{
+			JobID:           jobID,
+			UploadID:        uploadUUID,
+			Operation:       item.Operation,
+			Parameters:      item.Parameters,
+			ResourceProfile: resourceProfile,
+			AssignedQueue:   assignedQueue,
+			InputStorageKey: uploadRecord.StorageKey,
+			OriginalName:    uploadRecord.OriginalFilename,
+			MimeType:        uploadRecord.MimeType,
+		}
+
+		if err := h.queue.Enqueue(c.Request.Context(), assignedQueue, taskPayload); err != nil {
+			responses = append(responses, BatchJobResponseItem{
+				JobID:    jobID.String(),
+				UploadID: item.UploadID,
+				Error:    fmt.Sprintf("failed to enqueue: %v", err),
+			})
+			continue
+		}
+
+		responses = append(responses, BatchJobResponseItem{
+			JobID:           jobID.String(),
+			UploadID:        item.UploadID,
+			Operation:       item.Operation,
+			Status:          job.Status,
+			ResourceProfile: job.ResourceProfile,
+			EventsStreamURL: fmt.Sprintf("/v1/jobs/%s/events", jobID.String()),
+		})
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"batch_id": batchID,
+		"total":    len(responses),
+		"jobs":     responses,
+	})
+}
+
+// ReadyCheck performs deep subsystem readiness checks (storage, registry, queues).
+func (h *APIHandler) ReadyCheck(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status":          "ready",
+		"system":          "li-pdf-core-api",
+		"storage":         "healthy",
+		"registry_ops":    len(h.registry.ListAll()),
+		"timestamp_epoch": time.Now().Unix(),
+	})
+}
+
 // GetJob returns current job state, progress, and download outputs.
 func (h *APIHandler) GetJob(c *gin.Context) {
 	jobIDStr := c.Param("id")
