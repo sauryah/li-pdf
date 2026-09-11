@@ -7,6 +7,8 @@ export interface Capability {
   description: string;
   fidelity_rating: string;
   resource_profile: string;
+  queue?: string;
+  default_engine?: string;
   supports_batch: boolean;
   supports_page_range: boolean;
 }
