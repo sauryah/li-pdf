@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Next.js Build Outputs
+.next/
+out/
+build/
+dist/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
