@@ -27,7 +27,7 @@ export function Footer() {
                 Enterprise-Grade Privacy & Security
               </div>
               <div className="text-xs text-slate-500">
-                1-Hour Ephemeral Auto-Purge • Sandboxed Execution • Zero Data Retention
+                Sandboxed Execution • TLS 1.3 Encryption • Zero Data Retention
               </div>
             </div>
           </div>
@@ -179,8 +179,8 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#ephemeral-purger" className="hover:text-[#E5322D] transition-colors">
-                  1-Hour Ephemeral Purger
+                <a href="#privacy-policy" className="hover:text-[#E5322D] transition-colors">
+                  Ephemeral Lifecycle
                 </a>
               </li>
               <li>
