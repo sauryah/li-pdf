@@ -12,6 +12,7 @@ import (
 	"github.com/li-pdf/li-pdf/internal/api"
 	"github.com/li-pdf/li-pdf/internal/config"
 	"github.com/li-pdf/li-pdf/internal/engine"
+	"github.com/li-pdf/li-pdf/internal/metrics"
 	"github.com/li-pdf/li-pdf/internal/models"
 	"github.com/li-pdf/li-pdf/internal/queue"
 	"github.com/li-pdf/li-pdf/internal/storage"
@@ -84,6 +85,13 @@ func (w *WorkerSupervisor) Start(ctx context.Context, queueNames []string) {
 
 func (w *WorkerSupervisor) processTask(ctx context.Context, task *queue.TaskPayload) {
 	jobID := task.JobID
+	startTime := time.Now()
+	metrics.DefaultMetrics.RecordJobStart(task.AssignedQueue)
+	var finalStatus = "failed"
+	defer func() {
+		metrics.DefaultMetrics.RecordJobComplete(task.Operation, finalStatus, string(task.ResourceProfile), task.AssignedQueue, time.Since(startTime))
+	}()
+
 	log.Printf("[Worker %s] Processing Job %s (Op: %s, Profile: %s)", w.cfg.WorkerID, jobID, task.Operation, task.ResourceProfile)
 
 	w.updateJob(jobID, models.JobStatusProcessing, 10, "Initializing worker environment")
@@ -456,6 +464,7 @@ func (w *WorkerSupervisor) processTask(ctx context.Context, task *queue.TaskPayl
 	}
 
 	// 5. Mark Completed
+	finalStatus = "completed"
 	w.updateJob(jobID, models.JobStatusCompleted, 100, "Processing complete")
 	log.Printf("[Worker %s] Successfully completed Job %s", w.cfg.WorkerID, jobID)
 }
