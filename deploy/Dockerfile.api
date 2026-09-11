@@ -23,6 +23,8 @@ RUN apk add --no-cache \
     ttf-liberation \
     font-dejavu \
     font-freefont \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
     zip \
     file
 
