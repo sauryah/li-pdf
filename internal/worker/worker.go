@@ -25,6 +25,7 @@ type WorkerSupervisor struct {
 	pdfEngine   engine.PDFStructuralProcessor
 	pdfRenderer engine.PDFRenderer
 	imgEngine   engine.ImageProcessor
+	docEngine   engine.DocumentConverter
 	apiH        *api.APIHandler
 	workDir     string
 }
@@ -37,6 +38,7 @@ func NewWorkerSupervisor(
 	pdf engine.PDFStructuralProcessor,
 	pdfRen engine.PDFRenderer,
 	img engine.ImageProcessor,
+	doc engine.DocumentConverter,
 	apiH *api.APIHandler,
 ) *WorkerSupervisor {
 	wDir := filepath.Join(os.TempDir(), "lipdf_worker_scratch")
@@ -50,6 +52,7 @@ func NewWorkerSupervisor(
 		pdfEngine:   pdf,
 		pdfRenderer: pdfRen,
 		imgEngine:   img,
+		docEngine:   doc,
 		apiH:        apiH,
 		workDir:     wDir,
 	}
@@ -289,6 +292,46 @@ func (w *WorkerSupervisor) processTask(ctx context.Context, task *queue.TaskPayl
 		}
 		generatedOutputs = append(generatedOutputs, outputLocalPath)
 
+	// Office & Text Documents -> PDF
+	case "docx_to_pdf", "xlsx_to_pdf", "pptx_to_pdf", "doc_to_pdf", "xls_to_pdf", "ppt_to_pdf", "odt_to_pdf", "rtf_to_pdf", "txt_to_pdf", "html_to_pdf":
+		outMime = "application/pdf"
+		outputLocalPath = filepath.Join(jobScratch, "converted.pdf")
+		if err := w.docEngine.ConvertToPDF(ctx, localInput, outputLocalPath); err != nil {
+			w.failJob(jobID, fmt.Sprintf("Document conversion to PDF failed: %v", err))
+			return
+		}
+		generatedOutputs = append(generatedOutputs, outputLocalPath)
+
+	// Document -> Text Extraction
+	case "pdf_to_txt", "docx_to_txt":
+		outMime = "text/plain"
+		outputLocalPath = filepath.Join(jobScratch, "extracted.txt")
+		if err := w.docEngine.ExtractText(ctx, localInput, outputLocalPath); err != nil {
+			w.failJob(jobID, fmt.Sprintf("Text extraction failed: %v", err))
+			return
+		}
+		generatedOutputs = append(generatedOutputs, outputLocalPath)
+
+	// PDF -> HTML Conversion
+	case "pdf_to_html":
+		outMime = "text/html"
+		outputLocalPath = filepath.Join(jobScratch, "converted.html")
+		if err := w.docEngine.ConvertToHTML(ctx, localInput, outputLocalPath); err != nil {
+			w.failJob(jobID, fmt.Sprintf("Document conversion to HTML failed: %v", err))
+			return
+		}
+		generatedOutputs = append(generatedOutputs, outputLocalPath)
+
+	// PDF -> DOCX Conversion
+	case "pdf_to_docx":
+		outMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+		outputLocalPath = filepath.Join(jobScratch, "converted.docx")
+		if err := w.docEngine.ConvertDocument(ctx, localInput, "docx", outputLocalPath); err != nil {
+			w.failJob(jobID, fmt.Sprintf("PDF to DOCX conversion failed: %v", err))
+			return
+		}
+		generatedOutputs = append(generatedOutputs, outputLocalPath)
+
 	default:
 		w.failJob(jobID, fmt.Sprintf("Unsupported worker operation: %s", task.Operation))
 		return
@@ -298,19 +341,36 @@ func (w *WorkerSupervisor) processTask(ctx context.Context, task *queue.TaskPayl
 
 	// 3. Run Output Validator
 	for _, outPath := range generatedOutputs {
-		if outMime == "application/pdf" {
+		switch outMime {
+		case "application/pdf":
 			if err := w.validator.ValidatePDF(ctx, outPath, 1); err != nil {
 				w.failJob(jobID, fmt.Sprintf("Output validation failed (PDF): %v", err))
 				return
 			}
-		} else if outMime == "application/zip" {
-			// Validate zip file is non-empty
+		case "text/plain":
+			if err := w.validator.ValidateText(ctx, outPath); err != nil {
+				w.failJob(jobID, fmt.Sprintf("Output validation failed (Text): %v", err))
+				return
+			}
+		case "text/html":
+			if err := w.validator.ValidateHTML(ctx, outPath); err != nil {
+				w.failJob(jobID, fmt.Sprintf("Output validation failed (HTML): %v", err))
+				return
+			}
+		case "application/zip":
 			fi, err := os.Stat(outPath)
 			if err != nil || fi.Size() < 50 {
 				w.failJob(jobID, "Output validation failed: empty zip archive")
 				return
 			}
-		} else {
+		case "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			"application/vnd.openxmlformats-officedocument.presentationml.presentation":
+			if err := w.validator.ValidateDocument(ctx, outPath, "docx"); err != nil {
+				w.failJob(jobID, fmt.Sprintf("Output validation failed (Office Document): %v", err))
+				return
+			}
+		default:
 			if err := w.validator.ValidateImage(ctx, outPath, valFormat); err != nil {
 				w.failJob(jobID, fmt.Sprintf("Output validation failed (Image): %v", err))
 				return
