@@ -76,11 +76,23 @@ type ImageProcessor interface {
 	ImagesToPDF(ctx context.Context, imagePaths []string, outputPath string) error
 }
 
+// DocumentConverter handles Office document (DOCX, XLSX, PPTX, RTF, TXT, ODT) conversions.
+type DocumentConverter interface {
+	Name() string
+	ConvertToPDF(ctx context.Context, inputPath string, outputPath string) error
+	ConvertDocument(ctx context.Context, inputPath string, targetExt string, outputPath string) error
+	ExtractText(ctx context.Context, inputPath string, outputPath string) error
+	ConvertToHTML(ctx context.Context, inputPath string, outputPath string) error
+}
+
 // OutputValidator verifies generated file integrity prior to storage delivery.
 type OutputValidator interface {
 	Name() string
 	ValidatePDF(ctx context.Context, filePath string, expectedMinPages int) error
 	ValidateImage(ctx context.Context, filePath string, expectedFormat ImageFormat) error
+	ValidateDocument(ctx context.Context, filePath string, expectedExt string) error
+	ValidateText(ctx context.Context, filePath string) error
+	ValidateHTML(ctx context.Context, filePath string) error
 }
 
 func fileExists(p string) bool {
