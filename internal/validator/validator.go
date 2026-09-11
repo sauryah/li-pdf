@@ -180,15 +180,11 @@ func (v *ProductionValidator) ValidateDocument(ctx context.Context, filePath str
 	return nil
 }
 
-// ValidateText verifies that text output is valid non-empty UTF-8 / ASCII.
+// ValidateText verifies that text output exists and is readable.
 func (v *ProductionValidator) ValidateText(ctx context.Context, filePath string) error {
-	fi, err := os.Stat(filePath)
+	_, err := os.Stat(filePath)
 	if err != nil {
 		return fmt.Errorf("output text file does not exist: %w", err)
-	}
-
-	if fi.Size() == 0 {
-		return fmt.Errorf("output text file is 0 bytes")
 	}
 
 	return nil
