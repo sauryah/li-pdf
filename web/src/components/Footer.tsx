@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FileText,
   ShieldCheck,
@@ -11,10 +11,62 @@ import {
   Activity,
   Layers,
 } from 'lucide-react';
+import { ApiDocsModal } from './ApiDocsModal';
 
 export function Footer() {
+  const [apiModalOpen, setApiModalOpen] = useState(false);
+  const [apiModalTab, setApiModalTab] = useState('endpoints');
+
+  const handleSelectTool = (operation: string, accepts: string) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('lipdf:select_tool', {
+          detail: { operation, accepts },
+        })
+      );
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleSelectCategory = (category: string) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('lipdf:select_category', {
+          detail: { category },
+        })
+      );
+      const catalogEl = document.getElementById('capabilities-catalog');
+      if (catalogEl) {
+        catalogEl.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 300, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const openApiModal = (tab: string = 'endpoints') => {
+    setApiModalTab(tab);
+    setApiModalOpen(true);
+  };
+
+  const scrollToSection = (id: string) => {
+    if (typeof window !== 'undefined') {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-600 mt-20">
+      {/* API Documentation Interactive Modal */}
+      <ApiDocsModal
+        isOpen={apiModalOpen}
+        onClose={() => setApiModalOpen(false)}
+        initialTab={apiModalTab}
+      />
+
       {/* Trust & Certifications Banner */}
       <div className="border-b border-slate-100 bg-slate-50/70 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-6">
@@ -59,34 +111,55 @@ export function Footer() {
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <a href="/" className="hover:text-[#E5322D] transition-colors">
-                  Home
-                </a>
+                <button
+                  onClick={() => {
+                    handleSelectCategory('all');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
+                  Home & Upload
+                </button>
               </li>
               <li>
-                <a href="#organize" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectCategory('organize')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Organize PDF
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#optimize" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectCategory('optimize')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Compress & Optimize
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#convert-to-pdf" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectCategory('convert_to')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Convert to PDF
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#convert-from-pdf" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectCategory('convert_from')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Convert from PDF
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#workflow-automation" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => scrollToSection('workflow-automation')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Workflow Builder
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -98,30 +171,45 @@ export function Footer() {
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <a href="#batch-processing" className="hover:text-[#E5322D] transition-colors flex items-center space-x-1.5">
+                <button
+                  onClick={() => scrollToSection('workflow-automation')}
+                  className="hover:text-[#E5322D] transition-colors flex items-center space-x-1.5 text-left"
+                >
                   <Layers className="w-3.5 h-3.5 text-slate-400" />
                   <span>Multi-Queue Batching</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#ocr-engine" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectTool('pdf_ocr', '.pdf')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Tesseract 5 OCR Engine
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#qpdf-engine" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectTool('pdf_compress', '.pdf')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   QPDF Linearizer & Crypto
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#libreoffice-engine" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectTool('docx_to_pdf', '.docx,.doc')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Headless LibreOffice
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#image-engine" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => handleSelectTool('image_resize', '.jpg,.jpeg,.png,.webp')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Catmull-Rom Image Scaler
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -133,31 +221,46 @@ export function Footer() {
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <a href="#api-endpoints" className="hover:text-[#E5322D] transition-colors flex items-center space-x-1.5">
+                <button
+                  onClick={() => openApiModal('endpoints')}
+                  className="hover:text-[#E5322D] transition-colors flex items-center space-x-1.5 text-left"
+                >
                   <Terminal className="w-3.5 h-3.5 text-slate-400" />
                   <span>REST API Endpoints</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#metrics" className="hover:text-[#E5322D] transition-colors flex items-center space-x-1.5">
+                <button
+                  onClick={() => openApiModal('metrics')}
+                  className="hover:text-[#E5322D] transition-colors flex items-center space-x-1.5 text-left"
+                >
                   <Activity className="w-3.5 h-3.5 text-slate-400" />
                   <span>Prometheus Metrics (/metrics)</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#readiness" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => openApiModal('metrics')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Health & Readiness (/readyz)
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#direct-upload" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => openApiModal('presign')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Direct Presigned Uploads
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#idempotency" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => openApiModal('presign')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Idempotency Guarantee
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -169,29 +272,44 @@ export function Footer() {
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <a href="#security-policy" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => scrollToSection('architecture-pillars')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Hostile Sandbox Isolation
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#privacy-policy" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => scrollToSection('architecture-pillars')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Zero Data Retention
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#privacy-policy" className="hover:text-[#E5322D] transition-colors">
-                  Ephemeral Lifecycle
-                </a>
+                <button
+                  onClick={() => scrollToSection('faq')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
+                  Privacy FAQ
+                </button>
               </li>
               <li>
-                <a href="#validator-gate" className="hover:text-[#E5322D] transition-colors">
+                <button
+                  onClick={() => scrollToSection('architecture-pillars')}
+                  className="hover:text-[#E5322D] transition-colors text-left"
+                >
                   Output Validator Gate
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#aes256" className="hover:text-[#E5322D] transition-colors">
-                  AES-256 PDF Encryption
-                </a>
+                <button
+                  onClick={() => handleSelectTool('pdf_encrypt', '.pdf')}
+                  className="hover:text-[#E5322D] transition-colors text-left font-semibold text-[#E5322D]"
+                >
+                  Protect PDF (AES-256)
+                </button>
               </li>
             </ul>
           </div>
