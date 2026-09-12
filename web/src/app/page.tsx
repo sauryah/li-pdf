@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   fetchCapabilities,
   requestPresignedUpload,
@@ -48,6 +49,7 @@ interface ToolItem {
   icon: any;
   iconBg: string;
   iconColor: string;
+  href?: string;
 }
 
 const TOOLS_CATALOG: ToolItem[] = [
@@ -278,9 +280,23 @@ const TOOLS_CATALOG: ToolItem[] = [
     iconBg: 'bg-violet-50 group-hover:bg-violet-600',
     iconColor: 'text-violet-600 group-hover:text-white',
   },
+  {
+    id: 'passport_photo',
+    name: 'AI Passport & Visa Photo',
+    description: 'Convert portrait photos to compliant passport/visa photos with automatic background removal and print-ready A4 PDF.',
+    category: 'image',
+    operation: 'passport_photo',
+    accepts: '.jpg,.jpeg,.png,.webp,.heic',
+    badge: 'New • AI',
+    icon: Sparkles,
+    iconBg: 'bg-red-50 group-hover:bg-[#E5322D]',
+    iconColor: 'text-[#E5322D] group-hover:text-white',
+    href: '/passport-photo',
+  },
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [initialOp, setInitialOp] = useState<string | undefined>(undefined);
@@ -303,6 +319,10 @@ export default function HomePage() {
     const onToolSelect = (e: any) => {
       const { operation, accepts } = e.detail;
       const matchedTool = TOOLS_CATALOG.find((t) => t.operation === operation);
+      if (matchedTool?.href) {
+        router.push(matchedTool.href);
+        return;
+      }
       setPendingTool(matchedTool || null);
       if (fileInputRef.current) {
         fileInputRef.current.accept = accepts || '*/*';
@@ -335,7 +355,7 @@ export default function HomePage() {
       window.removeEventListener('lipdf:select_category', onCategorySelect);
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, []);
+  }, [router]);
 
   const handleFileSelected = (file: File, preselectedOp?: string) => {
     setSelectedFile(file);
@@ -345,6 +365,10 @@ export default function HomePage() {
   };
 
   const handleToolCardClick = (tool: ToolItem) => {
+    if (tool.href) {
+      router.push(tool.href);
+      return;
+    }
     setPendingTool(tool);
     if (fileInputRef.current) {
       fileInputRef.current.accept = tool.accepts;
