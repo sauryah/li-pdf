@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -165,18 +166,37 @@ type LocalStorageManager struct {
 	secretKey  string
 }
 
-func NewLocalStorageManager(baseDir, apiBaseURL string) (*LocalStorageManager, error) {
-	if err := os.MkdirAll(baseDir, 0755); err != nil {
+func NewLocalStorageManager(baseDir, apiBaseURL, secretKey string) (*LocalStorageManager, error) {
+	absBase, err := filepath.Abs(baseDir)
+	if err != nil {
+		return nil, fmt.Errorf("invalid storage base directory: %w", err)
+	}
+
+	if err := os.MkdirAll(absBase, 0755); err != nil {
 		return nil, err
 	}
+
+	if secretKey == "" {
+		// Generate cryptographically secure random token for signing
+		randomBytes := make([]byte, 32)
+		if _, randErr := rand.Read(randomBytes); randErr == nil {
+			secretKey = hex.EncodeToString(randomBytes)
+		} else {
+			secretKey = fmt.Sprintf("fallback-token-%d", time.Now().UnixNano())
+		}
+	}
+
 	return &LocalStorageManager{
-		baseDir:    baseDir,
+		baseDir:    absBase,
 		apiBaseURL: strings.TrimRight(apiBaseURL, "/"),
-		secretKey:  "local-dev-secret-key-32-chars-long!",
+		secretKey:  secretKey,
 	}, nil
 }
 
 func (l *LocalStorageManager) GeneratePresignedUpload(ctx context.Context, storageKey string, mimeType string, ttl time.Duration) (*PresignedUpload, error) {
+	if err := l.validateStorageKey(storageKey); err != nil {
+		return nil, err
+	}
 	exp := time.Now().Add(ttl).Unix()
 	sig := l.signKey(storageKey, exp)
 	u := fmt.Sprintf("%s/v1/storage/upload?key=%s&exp=%d&sig=%s", l.apiBaseURL, url.QueryEscape(storageKey), exp, sig)
@@ -188,6 +208,9 @@ func (l *LocalStorageManager) GeneratePresignedUpload(ctx context.Context, stora
 }
 
 func (l *LocalStorageManager) GeneratePresignedDownload(ctx context.Context, storageKey string, filename string, ttl time.Duration) (string, error) {
+	if err := l.validateStorageKey(storageKey); err != nil {
+		return "", err
+	}
 	exp := time.Now().Add(ttl).Unix()
 	sig := l.signKey(storageKey, exp)
 	return fmt.Sprintf("%s/v1/storage/download?key=%s&filename=%s&exp=%d&sig=%s",
@@ -195,36 +218,74 @@ func (l *LocalStorageManager) GeneratePresignedDownload(ctx context.Context, sto
 }
 
 func (l *LocalStorageManager) DownloadFile(ctx context.Context, storageKey string, targetLocalPath string) error {
-	src := filepath.Join(l.baseDir, filepath.FromSlash(storageKey))
-	data, err := os.ReadFile(src)
+	srcPath := l.GetLocalPath(storageKey)
+	if srcPath == "" {
+		return fmt.Errorf("invalid storage key / path traversal detected: %s", storageKey)
+	}
+
+	srcFile, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
+	defer srcFile.Close()
+
 	if err := os.MkdirAll(filepath.Dir(targetLocalPath), 0755); err != nil {
 		return err
 	}
-	return os.WriteFile(targetLocalPath, data, 0644)
-}
 
-func (l *LocalStorageManager) UploadFile(ctx context.Context, localPath string, storageKey string, mimeType string) error {
-	dst := filepath.Join(l.baseDir, filepath.FromSlash(storageKey))
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		return err
-	}
-	data, err := os.ReadFile(localPath)
+	dstFile, err := os.Create(targetLocalPath)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dst, data, 0644)
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+	return dstFile.Sync()
+}
+
+func (l *LocalStorageManager) UploadFile(ctx context.Context, localPath string, storageKey string, mimeType string) error {
+	dstPath := l.GetLocalPath(storageKey)
+	if dstPath == "" {
+		return fmt.Errorf("invalid storage key / path traversal detected: %s", storageKey)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
+		return err
+	}
+
+	srcFile, err := os.Open(localPath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+	return dstFile.Sync()
 }
 
 func (l *LocalStorageManager) DeleteFile(ctx context.Context, storageKey string) error {
-	target := filepath.Join(l.baseDir, filepath.FromSlash(storageKey))
+	target := l.GetLocalPath(storageKey)
+	if target == "" {
+		return fmt.Errorf("invalid storage key: %s", storageKey)
+	}
 	_ = os.Remove(target)
 	return nil
 }
 
 func (l *LocalStorageManager) VerifySignature(storageKey string, expStr string, sig string) bool {
+	if err := l.validateStorageKey(storageKey); err != nil {
+		return false
+	}
 	exp, err := strconv.ParseInt(expStr, 10, 64)
 	if err != nil || time.Now().Unix() > exp {
 		return false
@@ -233,8 +294,30 @@ func (l *LocalStorageManager) VerifySignature(storageKey string, expStr string, 
 	return hmac.Equal([]byte(expected), []byte(sig))
 }
 
+// GetLocalPath returns canonicalized absolute path ensuring it stays strictly inside baseDir.
+// Returns empty string if path traversal is detected.
 func (l *LocalStorageManager) GetLocalPath(storageKey string) string {
-	return filepath.Join(l.baseDir, filepath.FromSlash(storageKey))
+	if err := l.validateStorageKey(storageKey); err != nil {
+		return ""
+	}
+
+	cleanedKey := filepath.Clean(filepath.FromSlash(storageKey))
+	fullPath := filepath.Join(l.baseDir, cleanedKey)
+
+	// Ensure the fullPath starts with baseDir + separator
+	rel, err := filepath.Rel(l.baseDir, fullPath)
+	if err != nil || strings.HasPrefix(rel, "..") || rel == "." && storageKey != "" && storageKey != "." {
+		return ""
+	}
+
+	return fullPath
+}
+
+func (l *LocalStorageManager) validateStorageKey(storageKey string) error {
+	if strings.Contains(storageKey, "..") || strings.HasPrefix(storageKey, "/") || strings.HasPrefix(storageKey, "\\") {
+		return fmt.Errorf("invalid storage key format")
+	}
+	return nil
 }
 
 func (l *LocalStorageManager) signKey(storageKey string, exp int64) string {
