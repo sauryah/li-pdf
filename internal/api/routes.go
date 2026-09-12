@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -13,8 +14,13 @@ func SetupRouter(handler *APIHandler, sseHub *SSEHub) *gin.Engine {
 
 	// CORS configuration for frontend
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Idempotency-Key", "Authorization"}
+	if handler.cfg.AllowedOrigins == "*" || handler.cfg.AllowedOrigins == "" {
+		corsConfig.AllowAllOrigins = true
+	} else {
+		corsConfig.AllowOrigins = strings.Split(handler.cfg.AllowedOrigins, ",")
+		corsConfig.AllowCredentials = true
+	}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Idempotency-Key", "Authorization", "Accept", "X-Requested-With"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	r.Use(cors.New(corsConfig))
 
