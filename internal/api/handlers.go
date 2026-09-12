@@ -173,6 +173,11 @@ func (h *APIHandler) CreateJob(c *gin.Context) {
 
 	// Preflight analysis
 	cap, capFound := h.registry.FindOperation(req.Operation, uploadRecord.MimeType)
+	if !capFound {
+		// Attempt finding without source MIME constraint
+		cap, capFound = h.registry.FindOperation(req.Operation, "")
+	}
+
 	resourceProfile := models.ProfilePDFStandard
 	assignedQueue := "queue_pdf_std"
 	if capFound {
@@ -246,7 +251,7 @@ type BatchJobResponseItem struct {
 	Error           string                 `json:"error,omitempty"`
 }
 
-// CreateBatchJobs handles atomic batch dispatch of multiple conversion jobs.
+// CreateBatchJobs handles atomic batch dispatch of multiple conversion jobs with bound limits.
 func (h *APIHandler) CreateBatchJobs(c *gin.Context) {
 	var req BatchCreateJobRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -256,6 +261,11 @@ func (h *APIHandler) CreateBatchJobs(c *gin.Context) {
 
 	if len(req.Jobs) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "jobs array cannot be empty"})
+		return
+	}
+
+	if len(req.Jobs) > 50 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "batch size exceeds maximum limit of 50 jobs per request"})
 		return
 	}
 
@@ -285,6 +295,10 @@ func (h *APIHandler) CreateBatchJobs(c *gin.Context) {
 		}
 
 		cap, capFound := h.registry.FindOperation(item.Operation, uploadRecord.MimeType)
+		if !capFound {
+			cap, capFound = h.registry.FindOperation(item.Operation, "")
+		}
+
 		resourceProfile := models.ProfilePDFStandard
 		assignedQueue := "queue_pdf_std"
 		if capFound {
@@ -359,7 +373,7 @@ func (h *APIHandler) ReadyCheck(c *gin.Context) {
 	})
 }
 
-// GetJob returns current job state, progress, and download outputs.
+// GetJob returns current job state, progress, and download outputs with defensive copying.
 func (h *APIHandler) GetJob(c *gin.Context) {
 	jobIDStr := c.Param("id")
 	jobUUID, err := uuid.Parse(jobIDStr)
@@ -369,7 +383,11 @@ func (h *APIHandler) GetJob(c *gin.Context) {
 	}
 
 	h.jobsMu.RLock()
-	job, found := h.jobs[jobUUID]
+	rawJob, found := h.jobs[jobUUID]
+	var job models.Job
+	if found && rawJob != nil {
+		job = *rawJob
+	}
 	h.jobsMu.RUnlock()
 
 	if !found {
@@ -378,12 +396,17 @@ func (h *APIHandler) GetJob(c *gin.Context) {
 	}
 
 	h.outputsMu.RLock()
-	outs := h.outputs[jobUUID]
+	rawOuts := h.outputs[jobUUID]
+	outsCopy := make([]*models.Output, len(rawOuts))
+	copy(outsCopy, rawOuts)
 	h.outputsMu.RUnlock()
 
 	// Generate fresh signed URLs for outputs
 	var outputsWithURLs []models.Output
-	for _, out := range outs {
+	for _, out := range outsCopy {
+		if out == nil {
+			continue
+		}
 		o := *out
 		signedURL, err := h.storage.GeneratePresignedDownload(c.Request.Context(), o.StorageKey, o.Filename, 15*time.Minute)
 		if err == nil {
