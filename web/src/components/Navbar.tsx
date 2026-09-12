@@ -117,6 +117,13 @@ export function Navbar({ onSelectTool, onSelectCategory }: NavbarProps) {
           >
             OCR PDF
           </button>
+          <a
+            href="/passport-photo"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-[#E5322D] font-bold text-xs hover:bg-red-100 transition-colors"
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E5322D] animate-ping" />
+            <span>Passport Photo</span>
+          </a>
 
           {/* Convert PDF Dropdown */}
           <div className="relative" ref={convertRef}>
