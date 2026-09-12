@@ -16,3 +16,16 @@ def purge_expired_temp_files():
                     item.unlink(missing_ok=True)
             except Exception:
                 pass
+
+
+def purge_expired_sessions(session_store: dict, max_age_seconds: int = 900):
+    """Purge in-memory sessions that have exceeded the TTL."""
+    now = time.time()
+    expired_keys = [
+        k for k, v in session_store.items()
+        if (now - v.get("created_at", 0)) > max_age_seconds
+    ]
+    for k in expired_keys:
+        session_store.pop(k, None)
+    return len(expired_keys)
+
