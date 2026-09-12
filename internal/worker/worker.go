@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,7 +31,9 @@ type WorkerSupervisor struct {
 	ocrEngine   engine.OCREngine
 	apiH        *api.APIHandler
 	workDir     string
+	wg          sync.WaitGroup
 }
+
 
 func NewWorkerSupervisor(
 	cfg *config.Config,
@@ -62,6 +65,11 @@ func NewWorkerSupervisor(
 	}
 }
 
+// Wait blocks until all in-flight worker tasks complete.
+func (w *WorkerSupervisor) Wait() {
+	w.wg.Wait()
+}
+
 // Start runs the worker loop continuously.
 func (w *WorkerSupervisor) Start(ctx context.Context, queueNames []string) {
 	log.Printf("[Worker %s] Started listening on queues: %v", w.cfg.WorkerID, queueNames)
@@ -69,7 +77,9 @@ func (w *WorkerSupervisor) Start(ctx context.Context, queueNames []string) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("[Worker %s] Shutting down", w.cfg.WorkerID)
+			log.Printf("[Worker %s] Shutting down, waiting for in-flight tasks...", w.cfg.WorkerID)
+			w.Wait()
+			log.Printf("[Worker %s] Graceful shutdown complete", w.cfg.WorkerID)
 			return
 		default:
 			task, err := w.queue.Dequeue(ctx, queueNames, 2*time.Second)
@@ -84,7 +94,11 @@ func (w *WorkerSupervisor) Start(ctx context.Context, queueNames []string) {
 }
 
 func (w *WorkerSupervisor) processTask(ctx context.Context, task *queue.TaskPayload) {
+	w.wg.Add(1)
+	defer w.wg.Done()
+
 	jobID := task.JobID
+
 	startTime := time.Now()
 	metrics.DefaultMetrics.RecordJobStart(task.AssignedQueue)
 	var finalStatus = "failed"
