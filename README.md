@@ -64,7 +64,8 @@ A production-grade, privacy-first universal file conversion and compression plat
 * **Preflight Dynamic Routing:** Automatically inspects incoming file headers, page count, and complexity to assign optimal **Workload-Specific Resource Profiles** (`IMAGE_SMALL`, `PDF_STANDARD`, `PDF_HEAVY`).
 * **Selective PDF Compression:** Classifies embedded images before recompression to protect 1-bit text masks, CCITT/JBIG2, and CMYK color profiles from degradation.
 * **Output Validator Gate:** Hard production gate verifying that output files are decodable, non-empty, parseable by `qpdf`, and contain non-blank pages before delivery.
-* **Verifiable Ephemeral Storage:** Automated 1-hour Time-To-Live (TTL) auto-destruction of raw uploads and processed outputs.
+* **AI Passport & Visa Photo Maker:** Convert ordinary portraits into official passport/visa/ID photos with automatic face landmark alignment, portrait background matting, compliance checking, and millimeter-accurate A4 & 4×6" print sheet PDF generation.
+* **Verifiable Ephemeral Storage:** Automated Time-To-Live (TTL) auto-destruction of raw uploads and processed outputs.
 * **Idempotent Job Dispatch:** Native `Idempotency-Key` HTTP header support to prevent duplicate job processing on network retries.
 
 ---
@@ -78,10 +79,11 @@ docker compose up --build
 ```
 
 Services will start:
+* **Next.js Frontend:** `http://localhost:3050`
+* **AI Passport Photo Engine:** `http://localhost:8000`
 * **API Gateway & Worker:** `http://localhost:8085`
 * **PostgreSQL:** `localhost:5435`
 * **Redis Task Queue:** `localhost:6385`
-* **Next.js Frontend:** `http://localhost:3050`
 
 ---
 
