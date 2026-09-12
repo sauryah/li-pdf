@@ -20,27 +20,31 @@ type Config struct {
 	S3UseSSL     bool
 	DefaultTTL   time.Duration
 	ProTTL       time.Duration
-	WorkerID     string
-	MaxUploadMB  int64
+	WorkerID             string
+	MaxUploadMB          int64
+	StorageSigningSecret string
+	AllowedOrigins       string
 }
 
 func Load() *Config {
 	return &Config{
-		Port:         getEnv("PORT", "8085"),
-		DatabaseURL:  getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5435/lipdf?sslmode=disable"),
-		RedisURL:     getEnv("REDIS_URL", "redis://localhost:6385"),
-		StorageType:  getEnv("STORAGE_TYPE", "local"),
-		StorageDir:   getEnv("STORAGE_DIR", "./data/storage"),
-		S3Endpoint:   getEnv("S3_ENDPOINT", "http://localhost:9005"),
-		S3Region:     getEnv("S3_REGION", "us-east-1"),
-		S3Bucket:     getEnv("S3_BUCKET", "li-pdf-ephemeral"),
-		S3AccessKey:  getEnv("S3_ACCESS_KEY", "minioadmin"),
-		S3SecretKey:  getEnv("S3_SECRET_KEY", "minioadmin"),
-		S3UseSSL:     getEnvBool("S3_USE_SSL", false),
-		DefaultTTL:   time.Hour,
-		ProTTL:       24 * time.Hour,
-		WorkerID:     getEnv("WORKER_ID", "worker-default"),
-		MaxUploadMB:  getEnvInt64("MAX_UPLOAD_MB", 500),
+		Port:                 getEnv("PORT", "8085"),
+		DatabaseURL:          getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5435/lipdf?sslmode=disable"),
+		RedisURL:             getEnv("REDIS_URL", "redis://localhost:6385"),
+		StorageType:          getEnv("STORAGE_TYPE", "local"),
+		StorageDir:           getEnv("STORAGE_DIR", "./data/storage"),
+		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9005"),
+		S3Region:             getEnv("S3_REGION", "us-east-1"),
+		S3Bucket:             getEnv("S3_BUCKET", "li-pdf-ephemeral"),
+		S3AccessKey:          getEnv("S3_ACCESS_KEY", "minioadmin"),
+		S3SecretKey:          getEnv("S3_SECRET_KEY", "minioadmin"),
+		S3UseSSL:             getEnvBool("S3_USE_SSL", false),
+		DefaultTTL:           time.Hour,
+		ProTTL:               24 * time.Hour,
+		WorkerID:             getEnv("WORKER_ID", "worker-default"),
+		MaxUploadMB:          getEnvInt64("MAX_UPLOAD_MB", 500),
+		StorageSigningSecret: getEnv("STORAGE_SIGNING_SECRET", ""),
+		AllowedOrigins:       getEnv("ALLOWED_ORIGINS", "*"),
 	}
 }
 
