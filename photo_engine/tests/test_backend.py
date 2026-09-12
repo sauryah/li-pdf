@@ -135,3 +135,26 @@ def test_api_process_and_adjust():
     assert pdf_res.status_code == 200
     assert pdf_res.headers["content-type"] == "application/pdf"
     assert len(pdf_res.content) > 1000
+
+    # Test Single Download Endpoint
+    single_res = client.get(f"/api/download-single/{session_id}?format=jpg")
+    assert single_res.status_code == 200
+    assert single_res.headers["content-type"] == "image/jpeg"
+    assert len(single_res.content) > 500
+
+    # Test Invalid Format
+    inv_res = client.get(f"/api/download-single/{session_id}?format=invalid_fmt")
+    assert inv_res.status_code == 400
+
+def test_session_purge():
+    from app.services.cleanup_service import purge_expired_sessions
+    import time
+    fake_store = {
+        "s1": {"created_at": time.time() - 1000},
+        "s2": {"created_at": time.time()}
+    }
+    purged = purge_expired_sessions(fake_store, max_age_seconds=500)
+    assert purged == 1
+    assert "s1" not in fake_store
+    assert "s2" in fake_store
+
