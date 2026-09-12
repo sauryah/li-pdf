@@ -29,19 +29,23 @@ import {
   CheckCircle2,
   Shield,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle,
+  X
 } from 'lucide-react';
 
 export default function PassportPhotoPage() {
   const [specs, setSpecs] = useState<DocumentSpec[]>([]);
   const [selectedSpecId, setSelectedSpecId] = useState<string>('in_passport');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [processResult, setProcessResult] = useState<ProcessResponse | null>(null);
   const [activeTab, setActiveTab] = useState<'editor' | 'print_sheet'>('editor');
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
+
 
   // Drag & drop state for hero
   const [isDragOver, setIsDragOver] = useState(false);
@@ -98,6 +102,7 @@ export default function PassportPhotoPage() {
 
   // Process uploaded image file
   const handleProcessImage = async (file: File, specId: string) => {
+    setErrorMessage(null);
     try {
       setIsProcessing(true);
       const res = await processPhoto(file, specId);
@@ -126,7 +131,7 @@ export default function PassportPhotoPage() {
         spacing_mm: 4.0,
       });
     } catch (err: any) {
-      alert(`Processing error: ${err.message || 'Unable to process image. Make sure the photo engine backend is running.'}`);
+      setErrorMessage(`Processing error: ${err.message || 'Unable to process image. Make sure the photo engine backend is running.'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -134,15 +139,17 @@ export default function PassportPhotoPage() {
 
   // Demo sample photo loader
   const handleUseDemoSample = async () => {
+    setErrorMessage(null);
     try {
       const response = await fetch('/samples/sample_portrait.jpg');
       const blob = await response.blob();
       const file = new File([blob], 'demo_sample_portrait.jpg', { type: 'image/jpeg' });
       handleProcessImage(file, selectedSpecId);
     } catch (err) {
-      alert('Could not load sample portrait.');
+      setErrorMessage('Could not load sample portrait. Please upload a photo from your computer.');
     }
   };
+
 
   // Document spec switch
   const handleSpecSelect = (specId: string) => {
@@ -209,10 +216,28 @@ export default function PassportPhotoPage() {
 
   return (
     <div className="w-full flex-1 flex flex-col bg-slate-50 text-slate-900 font-sans">
+      {errorMessage && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 w-full">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start justify-between shadow-sm">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-red-500 hover:text-red-700 p-1 rounded-lg transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {!processResult && !isProcessing && (
           <div>
             {/* Hero Section */}
             <section className="relative overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-16 bg-gradient-to-b from-red-50/40 via-white to-slate-50 border-b border-slate-200/60">
+
               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto space-y-4">
                   <div className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3.5 py-1 text-xs font-semibold text-[#E5322D] ring-1 ring-inset ring-red-600/20">
