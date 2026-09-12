@@ -41,3 +41,18 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Python & Virtual Environments
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+*/.venv/
+photo_engine/.venv/
+photo_engine/temp_storage/
+temp_storage/
+AGENTS.md
+CLAUDE.md
+web/AGENTS.md
+web/CLAUDE.md
