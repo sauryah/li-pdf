@@ -1,6 +1,34 @@
 version: '3.8'
 
 services:
+  # Next.js Web Frontend
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    container_name: lipdf_web
+    ports:
+      - "3050:3050"
+    environment:
+      - PORT=3050
+      - NEXT_PUBLIC_API_URL=http://localhost:8085
+      - NEXT_PUBLIC_PHOTO_ENGINE_URL=http://localhost:8000
+    depends_on:
+      - api
+      - photo_engine
+    restart: unless-stopped
+
+  # Python AI Passport & Document Photo Engine
+  photo_engine:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.photo_engine
+    container_name: lipdf_photo_engine
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # Go API Gateway & Document Processing Worker
   api:
     build:
       context: ..
@@ -22,6 +50,7 @@ services:
       - redis
     restart: unless-stopped
 
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: lipdf_postgres
@@ -36,6 +65,7 @@ services:
       - ../migrations:/docker-entrypoint-initdb.d
     restart: unless-stopped
 
+  # Redis Cache & Task Queue
   redis:
     image: redis:7-alpine
     container_name: lipdf_redis
