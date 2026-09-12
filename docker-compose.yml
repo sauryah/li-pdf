@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Next.js Web Frontend
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    container_name: lipdf_web
+    ports:
+      - "3050:3050"
+    environment:
+      - PORT=3050
+      - NEXT_PUBLIC_API_URL=http://localhost:8085
+      - NEXT_PUBLIC_PHOTO_ENGINE_URL=http://localhost:8000
+    depends_on:
+      - api
+      - photo_engine
+    restart: unless-stopped
+
+  # Python AI Passport & Document Photo Engine
+  photo_engine:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.photo_engine
+    container_name: lipdf_photo_engine
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # Go API Gateway & Document Processing Worker
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    container_name: lipdf_api
+    ports:
+      - "8085:8085"
+    environment:
+      - PORT=8085
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/lipdf?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - STORAGE_TYPE=local
+      - STORAGE_DIR=/app/data/storage
+      - MAX_UPLOAD_MB=500
+    volumes:
+      - lipdf_storage:/app/data/storage
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: lipdf_postgres
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=lipdf
+    volumes:
+      - lipdf_pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  # Redis Cache & Task Queue
+  redis:
+    image: redis:7-alpine
+    container_name: lipdf_redis
+    ports:
+      - "6385:6379"
+    volumes:
+      - lipdf_redisdata:/data
+    restart: unless-stopped
+
+volumes:
+  lipdf_storage:
+  lipdf_pgdata:
+  lipdf_redisdata:
