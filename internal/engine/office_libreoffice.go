@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
@@ -94,15 +95,23 @@ func (l *LibreOfficeDocumentConverter) ConvertToHTML(ctx context.Context, inputP
 	return l.runConversion(ctx, inputPath, "html:XHTML", outputPath)
 }
 
+var safeFilterRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-:]+$`)
+
 func (l *LibreOfficeDocumentConverter) runConversion(ctx context.Context, inputPath string, filterOrExt string, outputPath string) error {
 	if !fileExists(inputPath) {
 		return fmt.Errorf("input file not found: %s", inputPath)
+	}
+
+	filterOrExt = strings.TrimSpace(filterOrExt)
+	if !safeFilterRegex.MatchString(filterOrExt) || len(filterOrExt) > 32 {
+		return fmt.Errorf("invalid format or filter specified: %s", filterOrExt)
 	}
 
 	targetExt := filterOrExt
 	if idx := strings.Index(filterOrExt, ":"); idx != -1 {
 		targetExt = filterOrExt[:idx]
 	}
+
 
 	// Create ephemeral scratch directory and isolated user installation
 	tempDir, err := os.MkdirTemp("", "lipdf_lo_")
