@@ -41,7 +41,7 @@ func main() {
 		log.Printf("Storage: S3/R2 Bucket '%s' at endpoint '%s'", cfg.S3Bucket, cfg.S3Endpoint)
 	} else {
 		apiBaseURL := fmt.Sprintf("http://localhost:%s", cfg.Port)
-		st, err = storage.NewLocalStorageManager(cfg.StorageDir, apiBaseURL)
+		st, err = storage.NewLocalStorageManager(cfg.StorageDir, apiBaseURL, cfg.StorageSigningSecret)
 		if err != nil {
 			log.Fatalf("Failed to initialize local storage manager: %v", err)
 		}
