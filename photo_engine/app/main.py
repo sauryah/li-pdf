@@ -1,13 +1,20 @@
 import uuid
 import io
 import time
+from contextlib import asynccontextmanager
 from typing import Optional
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse, StreamingResponse
 from PIL import Image
 
-from .config import TEMP_DIR, MAX_UPLOAD_SIZE_BYTES, ALLOWED_MIME_TYPES
+from .config import (
+    TEMP_DIR,
+    MAX_UPLOAD_SIZE_BYTES,
+    ALLOWED_MIME_TYPES,
+    SESSION_TTL_SECONDS,
+    CORS_ORIGINS
+)
 from .specs.document_specs import list_all_specs, get_spec, SPECS_DATABASE
 from .specs.models import (
     ProcessResponse,
@@ -26,24 +33,9 @@ from .services.crop_engine import CropEngine
 from .services.image_enhancer import ImageEnhancer
 from .services.validator import ComplianceValidator
 from .services.pdf_generator import PDFGenerator
-from .services.cleanup_service import purge_expired_temp_files
+from .services.cleanup_service import purge_expired_temp_files, purge_expired_sessions
 
-app = FastAPI(
-    title="PhotoReady API",
-    description="AI-powered Passport & ID Photo Processing API",
-    version="1.0.0"
-)
-
-# Enable CORS for Next.js frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# In-memory session store (with disk backup in TEMP_DIR for safety)
+# In-memory session store (with TTL eviction)
 # Stores: session_id -> {
 #   'original': PIL.Image,
 #   'cutout': PIL.Image (RGBA),
@@ -54,9 +46,31 @@ app.add_middleware(
 # }
 SESSION_STORE = {}
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: purge any stale temp files & sessions
     purge_expired_temp_files()
+    purge_expired_sessions(SESSION_STORE, SESSION_TTL_SECONDS)
+    yield
+    # Shutdown: clean up session memory
+    SESSION_STORE.clear()
+
+app = FastAPI(
+    title="PhotoReady API",
+    description="AI-powered Passport & ID Photo Processing API",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Enable CORS for Next.js frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS if CORS_ORIGINS else ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/api/health")
 def health_check():
@@ -92,6 +106,7 @@ async def process_photo(
     7. Return preview Data URLs & session ID.
     """
     background_tasks.add_task(purge_expired_temp_files)
+    background_tasks.add_task(purge_expired_sessions, SESSION_STORE, SESSION_TTL_SECONDS)
     
     spec = get_spec(doc_id)
     if not spec:
@@ -315,6 +330,10 @@ async def download_single_photo(session_id: str, format: str = "jpg"):
     """
     Download single passport photo at exact physical DPI.
     """
+    clean_fmt = format.lower().strip()
+    if clean_fmt not in ("jpg", "jpeg", "png"):
+        raise HTTPException(status_code=400, detail="Invalid format. Allowed formats: jpg, jpeg, png")
+
     session = SESSION_STORE.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session expired or not found.")
@@ -323,7 +342,7 @@ async def download_single_photo(session_id: str, format: str = "jpg"):
     spec_id = session.get("spec_id", "passport")
 
     buffer = io.BytesIO()
-    if format.lower() == "png":
+    if clean_fmt == "png":
         photo.save(buffer, format="PNG", dpi=(300, 300))
         mime = "image/png"
         ext = "png"
@@ -341,3 +360,4 @@ async def download_single_photo(session_id: str, format: str = "jpg"):
             "Content-Disposition": f'attachment; filename="{filename}"'
         }
     )
+
