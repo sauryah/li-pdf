@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -44,16 +45,23 @@ func (t *TesseractOCREngine) Name() string {
 	return "tesseract_ocr_v5"
 }
 
+var safeLangRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-\+]{1,32}$`)
+
+func sanitizeOCRLanguage(lang string) string {
+	lang = strings.TrimSpace(lang)
+	if lang == "" || !safeLangRegex.MatchString(lang) {
+		return "eng"
+	}
+	return lang
+}
+
 // ImageToText extracts text from an image using Tesseract OCR.
 func (t *TesseractOCREngine) ImageToText(ctx context.Context, inputPath string, opts OCROptions, outputPath string) error {
 	if !fileExists(inputPath) {
 		return fmt.Errorf("input image does not exist: %s", inputPath)
 	}
 
-	lang := opts.Language
-	if lang == "" {
-		lang = "eng"
-	}
+	lang := sanitizeOCRLanguage(opts.Language)
 
 	tempDir, err := os.MkdirTemp("", "lipdf_ocr_txt_")
 	if err != nil {
@@ -87,10 +95,7 @@ func (t *TesseractOCREngine) ImageToSearchablePDF(ctx context.Context, inputPath
 		return fmt.Errorf("input image does not exist: %s", inputPath)
 	}
 
-	lang := opts.Language
-	if lang == "" {
-		lang = "eng"
-	}
+	lang := sanitizeOCRLanguage(opts.Language)
 
 	tempDir, err := os.MkdirTemp("", "lipdf_ocr_pdf_")
 	if err != nil {
@@ -124,10 +129,8 @@ func (t *TesseractOCREngine) PDFToSearchablePDF(ctx context.Context, inputPath s
 		return fmt.Errorf("input PDF does not exist: %s", inputPath)
 	}
 
-	lang := opts.Language
-	if lang == "" {
-		lang = "eng"
-	}
+	lang := sanitizeOCRLanguage(opts.Language)
+
 
 	dpi := opts.DPI
 	if dpi <= 0 {
