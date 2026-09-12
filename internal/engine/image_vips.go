@@ -184,28 +184,131 @@ func img2pdfAvailable() bool {
 }
 
 func generateSimplePDFFromImages(imagePaths []string, outputPath string) error {
-	// Basic deterministic PDF output stream with image references
-	var buf strings.Builder
-	buf.WriteString("%PDF-1.4\n")
-	buf.WriteString("%\xE2\xE3\xCF\xD3\n")
-
-	// Object table
-	buf.WriteString("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
-	buf.WriteString("2 0 obj\n<< /Type /Pages /Kids [")
-
-	kids := make([]string, len(imagePaths))
-	for i := range imagePaths {
-		kids[i] = fmt.Sprintf("%d 0 R", 3+i)
-	}
-	buf.WriteString(strings.Join(kids, " "))
-	buf.WriteString(fmt.Sprintf("] /Count %d >>\nendobj\n", len(imagePaths)))
-
-	// For each page
-	for i := range imagePaths {
-		buf.WriteString(fmt.Sprintf("%d 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] >>\nendobj\n", 3+i))
+	if len(imagePaths) == 0 {
+		return fmt.Errorf("no input images provided for PDF generation")
 	}
 
-	buf.WriteString("xref\n0 1\n0000000000 65535 f \ntrailer\n<< /Size 10 /Root 1 0 R >>\nstartxref\n100\n%%EOF\n")
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return err
+	}
 
-	return os.WriteFile(outputPath, []byte(buf.String()), 0644)
+	type pageData struct {
+		width    int
+		height   int
+		jpegData []byte
+	}
+
+	var pages []pageData
+	for _, p := range imagePaths {
+		f, err := os.Open(p)
+		if err != nil {
+			return fmt.Errorf("failed to open image %s: %w", p, err)
+		}
+
+		img, _, err := image.Decode(f)
+		f.Close()
+		if err != nil {
+			return fmt.Errorf("failed to decode image %s: %w", p, err)
+		}
+
+		bounds := img.Bounds()
+		w := bounds.Dx()
+		h := bounds.Dy()
+		if w <= 0 || h <= 0 {
+			w, h = 800, 600
+		}
+
+		var jBuf bytes.Buffer
+		if err := jpeg.Encode(&jBuf, img, &jpeg.Options{Quality: 92}); err != nil {
+			return fmt.Errorf("failed to encode image to JPEG: %w", err)
+		}
+
+		pages = append(pages, pageData{
+			width:    w,
+			height:   h,
+			jpegData: jBuf.Bytes(),
+		})
+	}
+
+	var pdfBuf bytes.Buffer
+	var offsets []int
+
+	// Helper to track byte offsets for PDF cross-reference table
+	writeObj := func(objNum int, body string) {
+		offsets = append(offsets, pdfBuf.Len())
+		pdfBuf.WriteString(fmt.Sprintf("%d 0 obj\n", objNum))
+		pdfBuf.WriteString(body)
+		if !strings.HasSuffix(body, "\n") {
+			pdfBuf.WriteString("\n")
+		}
+		pdfBuf.WriteString("endobj\n")
+	}
+
+	writeStreamObj := func(objNum int, dict string, streamBytes []byte) {
+		offsets = append(offsets, pdfBuf.Len())
+		pdfBuf.WriteString(fmt.Sprintf("%d 0 obj\n", objNum))
+		pdfBuf.WriteString(dict)
+		if !strings.HasSuffix(dict, "\n") {
+			pdfBuf.WriteString("\n")
+		}
+		pdfBuf.WriteString("stream\n")
+		pdfBuf.Write(streamBytes)
+		pdfBuf.WriteString("\nendstream\nendobj\n")
+	}
+
+	// 1. Header
+	pdfBuf.WriteString("%PDF-1.4\n")
+	pdfBuf.WriteString("%\xE2\xE3\xCF\xD3\n")
+
+	// Obj 1: Catalog
+	writeObj(1, "<< /Type /Catalog /Pages 2 0 R >>")
+
+	// Obj 2: Pages
+	var kidRefs []string
+	numPages := len(pages)
+	for i := 0; i < numPages; i++ {
+		pageObjNum := 3 + (i * 3)
+		kidRefs = append(kidRefs, fmt.Sprintf("%d 0 R", pageObjNum))
+	}
+	pagesDict := fmt.Sprintf("<< /Type /Pages /Kids [%s] /Count %d >>", strings.Join(kidRefs, " "), numPages)
+	writeObj(2, pagesDict)
+
+	// Objects for each page:
+	// Page Obj: 3 + i*3
+	// Image Obj: 4 + i*3
+	// Content Stream: 5 + i*3
+	for i, page := range pages {
+		pageObjNum := 3 + (i * 3)
+		imgObjNum := 4 + (i * 3)
+		contentObjNum := 5 + (i * 3)
+
+		// Page object
+		pageDict := fmt.Sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Resources << /ProcSet [/PDF /ImageC] /XObject << /Im1 %d 0 R >> >> /Contents %d 0 R >>",
+			page.width, page.height, imgObjNum, contentObjNum)
+		writeObj(pageObjNum, pageDict)
+
+		// Image XObject
+		imgDict := fmt.Sprintf("<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length %d >>",
+			page.width, page.height, len(page.jpegData))
+		writeStreamObj(imgObjNum, imgDict, page.jpegData)
+
+		// Content stream to draw image
+		contentStream := fmt.Sprintf("q\n%d 0 0 %d 0 0 cm\n/Im1 Do\nQ\n", page.width, page.height)
+		contentDict := fmt.Sprintf("<< /Length %d >>", len(contentStream))
+		writeStreamObj(contentObjNum, contentDict, []byte(contentStream))
+	}
+
+	// Cross-Reference Table
+	xrefOffset := pdfBuf.Len()
+	totalObjects := 1 + (numPages * 3) + 2
+	pdfBuf.WriteString(fmt.Sprintf("xref\n0 %d\n", totalObjects))
+	pdfBuf.WriteString("0000000000 65535 f \n")
+	for _, offset := range offsets {
+		pdfBuf.WriteString(fmt.Sprintf("%010d 00000 n \n", offset))
+	}
+
+	// Trailer
+	pdfBuf.WriteString(fmt.Sprintf("trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", totalObjects, xrefOffset))
+
+	return os.WriteFile(outputPath, pdfBuf.Bytes(), 0644)
 }
