@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -87,7 +88,10 @@ func (q *RedisQueue) SubscribeProgress(ctx context.Context, jobID uuid.UUID) (<-
 	go func() {
 		defer close(ch)
 		for msg := range pubsub.Channel() {
-			ch <- msg.Payload
+			select {
+			case ch <- msg.Payload:
+			default:
+			}
 		}
 	}()
 
@@ -100,6 +104,7 @@ func (q *RedisQueue) SubscribeProgress(ctx context.Context, jobID uuid.UUID) (<-
 
 // MemoryQueue provides an in-memory queue fallback for tests and standalone mode.
 type MemoryQueue struct {
+	mu        sync.RWMutex
 	queues    map[string]chan *TaskPayload
 	listeners map[string][]chan string
 }
@@ -112,6 +117,9 @@ func NewMemoryQueue() *MemoryQueue {
 }
 
 func (m *MemoryQueue) getQueue(name string) chan *TaskPayload {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if ch, ok := m.queues[name]; ok {
 		return ch
 	}
@@ -153,7 +161,7 @@ func (m *MemoryQueue) Dequeue(ctx context.Context, queueNames []string, timeout 
 			return nil, ctx.Err()
 		case <-timer.C:
 			return nil, fmt.Errorf("dequeue timeout")
-		case <-time.After(50 * time.Millisecond):
+		case <-time.After(30 * time.Millisecond):
 		}
 	}
 }
@@ -167,12 +175,18 @@ func (m *MemoryQueue) PublishProgress(ctx context.Context, jobID uuid.UUID, perc
 	}
 	data, _ := json.Marshal(msg)
 	key := jobID.String()
-	if list, ok := m.listeners[key]; ok {
-		for _, ch := range list {
-			select {
-			case ch <- string(data):
-			default:
-			}
+
+	m.mu.RLock()
+	list := m.listeners[key]
+	// Make a shallow copy of listener channels while under read lock
+	targets := make([]chan string, len(list))
+	copy(targets, list)
+	m.mu.RUnlock()
+
+	for _, ch := range targets {
+		select {
+		case ch <- string(data):
+		default:
 		}
 	}
 	return nil
@@ -181,10 +195,32 @@ func (m *MemoryQueue) PublishProgress(ctx context.Context, jobID uuid.UUID, perc
 func (m *MemoryQueue) SubscribeProgress(ctx context.Context, jobID uuid.UUID) (<-chan string, func(), error) {
 	key := jobID.String()
 	ch := make(chan string, 100)
-	m.listeners[key] = append(m.listeners[key], ch)
 
+	m.mu.Lock()
+	m.listeners[key] = append(m.listeners[key], ch)
+	m.mu.Unlock()
+
+	var once sync.Once
 	cleanup := func() {
-		// cleanup channel
+		once.Do(func() {
+			m.mu.Lock()
+			defer m.mu.Unlock()
+
+			if currentList, ok := m.listeners[key]; ok {
+				var updated []chan string
+				for _, existingCh := range currentList {
+					if existingCh != ch {
+						updated = append(updated, existingCh)
+					}
+				}
+				if len(updated) == 0 {
+					delete(m.listeners, key)
+				} else {
+					m.listeners[key] = updated
+				}
+			}
+			close(ch)
+		})
 	}
 
 	return ch, cleanup, nil
